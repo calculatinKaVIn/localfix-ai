@@ -4,6 +4,7 @@ import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import { MapPin, LogOut, Menu, X } from "lucide-react";
 import { useState } from "react";
+import ThemeToggle from "./ThemeToggle";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -73,7 +74,8 @@ export default function Navbar() {
         </div>
 
         {/* Right Side - User Menu & Auth */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          <ThemeToggle />
           {isAuthenticated ? (
             <>
               {/* Desktop User Info */}

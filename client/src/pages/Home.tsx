@@ -15,16 +15,16 @@ export default function Home() {
       <section className="py-20 px-4">
         <div className="container max-w-6xl">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
+            <div className="animate-fade-in">
+              <h2 className="text-5xl md:text-6xl font-bold mb-6 leading-tight animate-slide-in-up">
                 Smart City Problem Reporting
               </h2>
-              <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
+              <p className="text-xl text-muted-foreground mb-8 leading-relaxed animate-slide-in-up" style={{animationDelay: '0.1s'}}>
                 Report potholes, broken streetlights, trash overflow, graffiti, and unsafe sidewalks. Our AI automatically classifies issues and generates professional reports for city departments.
               </p>
 
               {isAuthenticated ? (
-                <div className="flex gap-4">
+                <div className="flex gap-4 animate-slide-in-up" style={{animationDelay: '0.2s'}}>
                   <Button
                     size="lg"
                     className="btn-primary"
@@ -42,7 +42,7 @@ export default function Home() {
                   </Button>
                 </div>
               ) : (
-                <Button size="lg" className="btn-primary" asChild>
+                <Button size="lg" className="btn-primary animate-slide-in-up" style={{animationDelay: '0.2s'}} asChild>
                   <a href={getLoginUrl()}>
                     Get Started
                     <ArrowRight className="w-4 h-4 ml-2" />
@@ -51,9 +51,9 @@ export default function Home() {
               )}
             </div>
 
-            <div className="relative">
+            <div className="relative animate-scale-in" style={{animationDelay: '0.2s'}}>
               <div className="absolute inset-0 bg-gradient-to-br from-primary/20 to-secondary/20 rounded-2xl blur-3xl" />
-              <Card className="card-elegant p-8 relative">
+              <Card className="card-elegant p-8 relative hover:shadow-2xl transition-all duration-300">
                 <div className="space-y-6">
                   <div className="flex gap-4">
                     <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -67,19 +67,19 @@ export default function Home() {
 
                   <div className="border-t border-border pt-6">
                     <div className="space-y-3">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 hover:translate-x-1 transition-transform duration-300">
                         <CheckCircle className="w-4 h-4 text-secondary" />
                         <span className="text-sm">Classification: Road Damage</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 hover:translate-x-1 transition-transform duration-300">
                         <CheckCircle className="w-4 h-4 text-secondary" />
                         <span className="text-sm">Priority: Medium</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 hover:translate-x-1 transition-transform duration-300">
                         <CheckCircle className="w-4 h-4 text-secondary" />
                         <span className="text-sm">Department: Transportation</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 hover:translate-x-1 transition-transform duration-300">
                         <CheckCircle className="w-4 h-4 text-secondary" />
                         <span className="text-sm">Impact Score: 55/100</span>
                       </div>
@@ -95,7 +95,7 @@ export default function Home() {
       {/* Features Section */}
       <section className="py-20 px-4 bg-background/50">
         <div className="container max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-xl text-muted-foreground">
               Simple, intelligent, and effective problem reporting
@@ -103,35 +103,25 @@ export default function Home() {
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <Card className="card-elegant p-8">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <span className="text-2xl">✍️</span>
-              </div>
-              <h3 className="text-xl font-semibold mb-3">1. Describe</h3>
-              <p className="text-muted-foreground">
-                Write a natural description of the problem you've found in your community. Be as detailed as possible.
-              </p>
-            </Card>
-
-            <Card className="card-elegant p-8">
-              <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mb-4">
-                <Zap className="w-6 h-6 text-secondary" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">2. AI Analysis</h3>
-              <p className="text-muted-foreground">
-                Our AI instantly classifies the problem, assigns priority, and routes it to the right department.
-              </p>
-            </Card>
-
-            <Card className="card-elegant p-8">
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
-                <BarChart3 className="w-6 h-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold mb-3">3. Impact Score</h3>
-              <p className="text-muted-foreground">
-                Get an impact assessment showing risk level, affected area, and suggested urgency timeline.
-              </p>
-            </Card>
+            {[
+              { icon: "✍️", title: "1. Describe", desc: "Write a natural description of the problem you've found in your community. Be as detailed as possible." },
+              { icon: "⚡", title: "2. AI Analysis", desc: "Our AI instantly classifies the problem, assigns priority, and routes it to the right department." },
+              { icon: "📊", title: "3. Impact Score", desc: "Get an impact assessment showing risk level, affected area, and suggested urgency timeline." },
+            ].map((feature, idx) => (
+              <Card 
+                key={idx}
+                className="card-elegant p-8 animate-slide-in-up hover:scale-105 transition-all duration-300" 
+                style={{animationDelay: `${idx * 0.1}s`}}
+              >
+                <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
+                  <span className="text-2xl">{feature.icon}</span>
+                </div>
+                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
+                <p className="text-muted-foreground">
+                  {feature.desc}
+                </p>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -139,7 +129,7 @@ export default function Home() {
       {/* Problem Types Section */}
       <section className="py-20 px-4">
         <div className="container max-w-6xl">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 animate-fade-in">
             <h2 className="text-4xl font-bold mb-4">Problem Types We Handle</h2>
             <p className="text-xl text-muted-foreground">
               Report any urban infrastructure issue
@@ -156,9 +146,13 @@ export default function Home() {
               { icon: "💧", name: "Water Damage", desc: "Flooding" },
               { icon: "🌳", name: "Vegetation", desc: "Overgrowth" },
               { icon: "⚠️", name: "Other", desc: "Miscellaneous" },
-            ].map((type) => (
-              <Card key={type.name} className="card-elegant p-6 text-center">
-                <div className="text-4xl mb-3">{type.icon}</div>
+            ].map((type, idx) => (
+              <Card 
+                key={type.name} 
+                className="card-elegant p-6 text-center animate-slide-in-up hover:shadow-lg hover:scale-105 transition-all duration-300 cursor-pointer"
+                style={{animationDelay: `${idx * 0.05}s`}}
+              >
+                <div className="text-4xl mb-3 transition-transform duration-300 hover:scale-125">{type.icon}</div>
                 <h3 className="font-semibold mb-1">{type.name}</h3>
                 <p className="text-sm text-muted-foreground">{type.desc}</p>
               </Card>
@@ -171,18 +165,20 @@ export default function Home() {
       <section className="py-20 px-4 bg-primary/5">
         <div className="container max-w-6xl">
           <div className="grid md:grid-cols-3 gap-8 text-center">
-            <div>
-              <div className="text-5xl font-bold text-primary mb-2">AI-Powered</div>
-              <p className="text-lg text-muted-foreground">Instant classification and analysis</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-secondary mb-2">Professional</div>
-              <p className="text-lg text-muted-foreground">Ready-to-submit reports</p>
-            </div>
-            <div>
-              <div className="text-5xl font-bold text-accent mb-2">Transparent</div>
-              <p className="text-lg text-muted-foreground">Track your reports in real-time</p>
-            </div>
+            {[
+              { label: "AI-Powered", desc: "Instant classification and analysis" },
+              { label: "Professional", desc: "Ready-to-submit reports" },
+              { label: "Transparent", desc: "Track your reports in real-time" },
+            ].map((stat, idx) => (
+              <div 
+                key={idx}
+                className="animate-fade-in hover:scale-110 transition-transform duration-300"
+                style={{animationDelay: `${idx * 0.1}s`}}
+              >
+                <div className="text-5xl font-bold text-primary mb-2">{stat.label}</div>
+                <p className="text-lg text-muted-foreground">{stat.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -191,7 +187,7 @@ export default function Home() {
       {!isAuthenticated && (
         <section className="py-20 px-4">
           <div className="container max-w-2xl text-center">
-            <Card className="card-elegant p-12 bg-gradient-to-br from-primary/10 to-secondary/10">
+            <Card className="card-elegant p-12 bg-gradient-to-br from-primary/10 to-secondary/10 animate-scale-in hover:shadow-2xl transition-all duration-300">
               <h2 className="text-3xl font-bold mb-4">Ready to Make a Difference?</h2>
               <p className="text-lg text-muted-foreground mb-8">
                 Join thousands of community members reporting and fixing urban infrastructure problems.
