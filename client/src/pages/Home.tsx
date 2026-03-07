@@ -11,58 +11,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Navigation */}
-      <nav className="border-b border-border/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="container max-w-7xl flex items-center justify-between h-16">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-primary rounded-lg flex items-center justify-center">
-              <MapPin className="w-6 h-6 text-primary-foreground" />
-            </div>
-            <h1 className="text-2xl font-bold">LocalFix AI</h1>
-          </div>
-
-          <div className="flex items-center gap-4">
-            {isAuthenticated ? (
-              <>
-                <Button variant="ghost" onClick={() => setLocation("/submit")}>
-                  Report Problem
-                </Button>
-                <Button variant="ghost" onClick={() => setLocation("/history")}>
-                  My Reports
-                </Button>
-                <Button variant="ghost" onClick={() => setLocation("/community-map")}>
-                  Live Map
-                </Button>
-                <Button variant="ghost" onClick={() => setLocation("/profile")}>
-                  Profile
-                </Button>
-                <Button variant="ghost" onClick={() => setLocation("/interactive-map")}>
-                  Add Problem
-                </Button>
-                <Button variant="ghost" onClick={() => setLocation("/analytics")}>
-                  Analytics
-                </Button>
-                {user?.role === "admin" && (
-                  <Button variant="ghost" onClick={() => setLocation("/admin")}>
-                    Admin
-                  </Button>
-                )}
-                <div className="flex items-center gap-2 pl-4 border-l border-border">
-                  <div className="text-right">
-                    <p className="text-sm font-medium">{user?.name}</p>
-                    <p className="text-xs text-muted-foreground">{user?.email}</p>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <Button asChild className="btn-primary">
-                <a href={getLoginUrl()}>Sign In</a>
-              </Button>
-            )}
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="py-20 px-4">
         <div className="container max-w-6xl">

@@ -212,3 +212,13 @@
 - [x] Test navigation between all pages
 - [x] Verify home page is accessible from all pages
 - [x] Verify live map is accessible from all pages
+
+
+## Bug Fixes - Duplicate Navbar & Geolocation
+- [x] Find pages with duplicate navbar (Home, SubmitProblem, etc.)
+- [x] Remove duplicate navbar components from pages
+- [x] Ensure only one persistent navbar appears on all pages
+- [x] Implement geolocation permission request on app initialization
+- [x] Add location capture in SubmitProblem when filing a report
+- [x] Display live location marker on map for newly filed reports
+- [x] Test geolocation on different browsers and devices
