@@ -181,7 +181,12 @@ export default defineConfig({
     ],
     fs: {
       strict: true,
-      deny: ["**/.*"],
+      deny: ["**/..*"],
+    },
+    hmr: {
+      protocol: "wss",
+      host: undefined,
+      port: undefined,
     },
   },
 });

@@ -379,3 +379,9 @@
 - [x] Implement ImageLoader component with retry logic and error handling
 - [x] Integrate ImageLoader into CommunityMap and fix data structure issues
 - [x] Write and pass vitest tests for image loading functionality
+
+
+## Bug Fixes - Vite WebSocket HMR Connection
+- [x] Fix Vite HMR WebSocket connection to production URL
+- [x] Configure HMR settings for proper browser-to-server communication
+- [x] Test WebSocket connection stability
