@@ -281,20 +281,27 @@ export const appRouter = router({
   }),
 
   map: router({
-    /**
-     * Get all problems with location data for the community map (public)
-     */
-    allProblems: publicProcedure.query(async () => {
-      try {
-        return await getAllProblemsForMap();
-      } catch (error) {
-        console.error("Error fetching map problems:", error);
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch map data",
-        });
-      }
-    }),
+    allProblems: publicProcedure
+      .input(z.object({
+        status: z.string().optional(),
+        limit: z.number().optional(),
+        offset: z.number().optional(),
+      }).optional())
+      .query(async ({ input }) => {
+        try {
+          return await getAllProblemsForMap({
+            status: input?.status,
+            limit: input?.limit,
+            offset: input?.offset,
+          });
+        } catch (error) {
+          console.error("Error fetching map problems:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch map data",
+          });
+        }
+      }),
   }),
 
   analytics: router({

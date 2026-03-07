@@ -1,4 +1,4 @@
-import { count, desc, eq } from "drizzle-orm";
+import { count, desc, eq, sql } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import { InsertUser, users, InsertReport, InsertProblem, problems, reports } from "../drizzle/schema";
 import { ENV } from './_core/env';
@@ -90,7 +90,64 @@ export async function getUserByOpenId(openId: string) {
 }
 
 /**
- * Get all problems with their reports for a specific user
+ * Get all problems with their reports and user info for the community map
+ */
+export async function getAllProblemsForMap(filters?: {
+  status?: string;
+  limit?: number;
+  offset?: number;
+}) {
+  const db = await getDb();
+  if (!db) return [];
+
+  try {
+    const statusFilter = filters?.status && filters.status !== 'all' 
+      ? eq(problems.status, filters.status as any)
+      : undefined;
+
+    const result = await db
+      .select({
+        problem: problems,
+        report: reports,
+        userName: users.name,
+      })
+      .from(problems)
+      .leftJoin(reports, eq(reports.problemId, problems.id))
+      .leftJoin(users, eq(users.id, problems.userId))
+      .where(statusFilter)
+      .orderBy(desc(problems.createdAt))
+      .limit(filters?.limit || 10000)
+      .offset(filters?.offset || 0);
+
+    return result;
+  } catch (error) {
+    console.error("[Database] Error fetching problems for map:", error);
+    return [];
+  }
+}
+
+/**
+ * Create a new problem
+ */
+export async function createProblem(data: InsertProblem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result: any = await db.insert(problems).values(data);
+
+  // Get the inserted problem by userId and title (most recent)
+  const inserted = await db
+    .select()
+    .from(problems)
+    .where(eq(problems.userId, data.userId!))
+    .orderBy(desc(problems.createdAt))
+    .limit(1);
+
+  return inserted[0] || null;
+}
+
+/**
+ * Get all problems for a user
  */
 export async function getUserProblems(userId: number) {
   const db = await getDb();
@@ -110,11 +167,11 @@ export async function getUserProblems(userId: number) {
 }
 
 /**
- * Get all problems with pagination (for admin dashboard)
+ * Get all problems (paginated)
  */
-export async function getAllProblems(limit: number = 50, offset: number = 0) {
+export async function getAllProblems(limit = 50, offset = 0) {
   const db = await getDb();
-  if (!db) return { problems: [], total: 0 };
+  if (!db) return [];
 
   const result = await db
     .select({
@@ -127,11 +184,7 @@ export async function getAllProblems(limit: number = 50, offset: number = 0) {
     .limit(limit)
     .offset(offset);
 
-  // Get total count
-  const countResult = await db.select({ count: count() }).from(problems);
-  const total = countResult[0]?.count || 0;
-
-  return { problems: result, total };
+  return result;
 }
 
 /**
@@ -155,73 +208,19 @@ export async function getProblemWithReport(problemId: number) {
 }
 
 /**
- * Get all problems with their reports and user info for the community map
- */
-export async function getAllProblemsForMap() {
-  const db = await getDb();
-  if (!db) return [];
-
-  const result = await db
-    .select({
-      problem: problems,
-      report: reports,
-      userName: users.name,
-    })
-    .from(problems)
-    .leftJoin(reports, eq(reports.problemId, problems.id))
-    .leftJoin(users, eq(users.id, problems.userId))
-    .orderBy(desc(problems.createdAt));
-
-  return result;
-}
-
-/**
- * Create a new problem
- */
-export async function createProblem(data: InsertProblem) {
-  const db = await getDb();
-  if (!db) throw new Error("Database not available");
-
-  const result: any = await db.insert(problems).values(data);
-  
-  // Extract the inserted ID from the result
-  // MySQL2 returns insertId in the result array
-  let insertId: number | null = null;
-  
-  if (result && Array.isArray(result) && result.length > 0) {
-    insertId = result[0]?.insertId ?? result[0]?.id;
-  } else if (result?.insertId) {
-    insertId = result.insertId;
-  }
-  
-  if (!insertId) {
-    console.error("Insert result:", result);
-    throw new Error("Failed to get inserted problem ID");
-  }
-  
-  // Fetch the newly inserted problem by ID
-  const inserted = await db
-    .select()
-    .from(problems)
-    .where(eq(problems.id, insertId))
-    .limit(1);
-  
-  if (inserted.length === 0) {
-    throw new Error("Failed to retrieve inserted problem");
-  }
-  
-  return inserted[0];
-}
-
-/**
- * Create a new report for a problem
+ * Create a report for a problem
  */
 export async function createReport(data: InsertReport) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(reports).values(data);
-  return result;
+  try {
+    const result = await db.insert(reports).values(data);
+    return result;
+  } catch (error) {
+    console.error("[Database] Error creating report:", error);
+    throw error;
+  }
 }
 
 /**
@@ -233,21 +232,24 @@ export async function updateProblemStatus(problemId: number, status: string) {
 
   const result = await db
     .update(problems)
-    .set({ status: status as any, updatedAt: new Date() })
+    .set({ status: status as any })
     .where(eq(problems.id, problemId));
 
   return result;
 }
 
 /**
- * Delete a problem and its associated report
+ * Delete a problem and its report
  */
 export async function deleteProblem(problemId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  // Reports will be deleted automatically due to cascade delete
+  // Delete report first (cascade will handle it, but explicit is safer)
+  await db.delete(reports).where(eq(reports.problemId, problemId));
+
+  // Delete problem
   const result = await db.delete(problems).where(eq(problems.id, problemId));
+
   return result;
 }
-
