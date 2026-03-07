@@ -447,3 +447,12 @@
 - [x] Create tRPC procedures for photo reporting (3 procedures)
 - [x] Integrate photo reporting router into main app
 - [x] Write and pass 16 photo reporting tests
+
+
+## Image Gallery on Live Map
+- [x] Create image modal component for full-size view
+- [x] Add thumbnail display to map markers
+- [x] Integrate image modal into CommunityMap
+- [x] Add image gallery navigation (prev/next)
+- [x] Add image metadata display (date, uploader)
+- [x] Write and pass image gallery tests

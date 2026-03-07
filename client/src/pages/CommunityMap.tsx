@@ -1,6 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { MapView } from "@/components/Map";
 import { ImageLoader } from "@/components/ImageLoader";
+import { ImageModal } from "@/components/ImageModal";
+import { ImageThumbnailGallery } from "@/components/ImageThumbnailGallery";
 import { trpc } from "@/lib/trpc";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
@@ -70,6 +72,8 @@ export default function CommunityMap() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery();
 
@@ -409,13 +413,22 @@ export default function CommunityMap() {
               {selectedProblem.problem.imageUrl && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">Photo</p>
-                  <ImageLoader
-                    src={selectedProblem.problem.imageUrl}
-                    alt="Problem"
-                    className="w-full rounded-lg"
-                    fallbackText="Unable to load problem image. This may be due to network issues or image expiration."
-                    maxRetries={3}
-                  />
+                  <button
+                    onClick={() => {
+                      setShowImageModal(true);
+                      setSelectedImageIndex(0);
+                    }}
+                    className="w-full rounded-lg overflow-hidden hover:opacity-90 transition-opacity"
+                  >
+                    <ImageLoader
+                      src={selectedProblem.problem.imageUrl}
+                      alt="Problem"
+                      className="w-full rounded-lg cursor-pointer"
+                      fallbackText="Unable to load problem image."
+                      maxRetries={3}
+                    />
+                  </button>
+                  <p className="text-xs text-muted-foreground mt-2 text-center">Click to view full size</p>
                 </div>
               )}
               {!selectedProblem.problem.imageUrl && (
@@ -509,6 +522,24 @@ export default function CommunityMap() {
               )}
             </div>
           </div>
+        )}
+
+        {/* Image Modal */}
+        {selectedProblem?.problem.imageUrl && (
+          <ImageModal
+            isOpen={showImageModal}
+            images={[
+              {
+                url: selectedProblem.problem.imageUrl,
+                title: selectedProblem.problem.title,
+                description: selectedProblem.problem.description,
+                uploadedAt: selectedProblem.problem.createdAt,
+              },
+            ]}
+            currentIndex={selectedImageIndex}
+            onClose={() => setShowImageModal(false)}
+            onImageChange={setSelectedImageIndex}
+          />
         )}
       </div>
     </div>
