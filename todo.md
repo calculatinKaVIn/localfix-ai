@@ -526,3 +526,16 @@
 - [x] Add success toast notification
 - [x] Test resolve functionality on Live Map
 - [x] Verify marker deletion from map
+
+
+## Resolution Reason Tracking System
+- [x] Add resolutionReason field to problems table in schema
+- [x] Create migration for resolution reason column
+- [x] Add reason selection UI to resolve confirmation dialog
+- [x] Update deleteProblem mutation to accept resolution reason
+- [x] Store resolution reason in database when resolving
+- [x] Display resolution reason on problem details/history
+- [ ] Add resolution reason analytics to Analytics page
+- [ ] Create pie chart for resolution reason distribution
+- [ ] Add filtering by resolution reason on Live Map
+- [ ] Write tests for resolution reason tracking

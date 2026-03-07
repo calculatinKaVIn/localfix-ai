@@ -54,6 +54,12 @@ export const reportStatuses = ['submitted', 'in_progress', 'resolved', 'rejected
 export type ReportStatus = (typeof reportStatuses)[number];
 
 /**
+ * Reasons for problem resolution
+ */
+export const resolutionReasons = ['fixed', 'duplicate', 'invalid', 'no_action_needed', 'other'] as const;
+export type ResolutionReason = (typeof resolutionReasons)[number];
+
+/**
  * Problems table - stores user-reported issues
  */
 export const problems = mysqlTable('problems', {
@@ -65,6 +71,8 @@ export const problems = mysqlTable('problems', {
   latitude: varchar('latitude', { length: 50 }),
   longitude: varchar('longitude', { length: 50 }),
   status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
+  resolutionReason: mysqlEnum('resolutionReason', resolutionReasons),
+  resolvedAt: timestamp('resolvedAt'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
 });

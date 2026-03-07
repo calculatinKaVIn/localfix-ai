@@ -197,7 +197,7 @@ export const appRouter = router({
      * Delete a problem (admin or problem owner)
      */
     deleteProblem: protectedProcedure
-      .input(z.object({ problemId: z.number() }))
+      .input(z.object({ problemId: z.number(), resolutionReason: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
         try {
           // Allow deletion if user is admin or problem owner
@@ -210,7 +210,7 @@ export const appRouter = router({
             });
           }
 
-          await deleteProblem(input.problemId);
+          await deleteProblem(input.problemId, input.resolutionReason);
           return { success: true };
         } catch (error) {
           if (error instanceof TRPCError) throw error;

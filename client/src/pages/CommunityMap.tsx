@@ -76,6 +76,15 @@ export default function CommunityMap() {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [showResolveConfirm, setShowResolveConfirm] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
+  const [selectedReason, setSelectedReason] = useState<string>('fixed');
+
+  const resolutionReasons = [
+    { value: 'fixed', label: 'Fixed', description: 'Issue has been resolved' },
+    { value: 'duplicate', label: 'Duplicate', description: 'Already reported elsewhere' },
+    { value: 'invalid', label: 'Invalid', description: 'Not a valid issue' },
+    { value: 'no_action_needed', label: 'No Action Needed', description: 'No action required' },
+    { value: 'other', label: 'Other', description: 'Other reason' },
+  ];
 
   const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery();
   const deleteProblemMutation = trpc.problems.deleteProblem.useMutation();
@@ -412,6 +421,19 @@ export default function CommunityMap() {
                 )}
               </div>
 
+              {/* Resolution Reason (if resolved) */}
+              {selectedProblem.problem.resolutionReason && (
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 transition-colors duration-300">
+                  <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1 flex items-center gap-1">
+                    <CheckCircle2 className="w-3.5 h-3.5" /> Resolution Reason
+                  </p>
+                  <p className="text-sm text-green-600 dark:text-green-300 capitalize">{selectedProblem.problem.resolutionReason.replace(/_/g, ' ')}</p>
+                  {selectedProblem.problem.resolvedAt && (
+                    <p className="text-xs text-green-500 dark:text-green-400 mt-1">Resolved: {formatDate(selectedProblem.problem.resolvedAt)}</p>
+                  )}
+                </div>
+              )}
+
               {/* Problem Image */}
               {selectedProblem.problem.imageUrl && (
                 <div>
@@ -535,14 +557,35 @@ export default function CommunityMap() {
                     Resolve Report
                   </Button>
                 ) : (
-                  <div className="space-y-3 animate-fade-in">
-                    <p className="text-sm font-medium text-foreground">Are you sure you want to resolve this report? This will delete it from the map.</p>
+                  <div className="space-y-4 animate-fade-in">
+                    <div>
+                      <p className="text-sm font-medium text-foreground mb-3">Why are you resolving this report?</p>
+                      <div className="space-y-2">
+                        {resolutionReasons.map((reason) => (
+                          <label key={reason.value} className="flex items-center gap-3 p-2 rounded-lg border border-border hover:bg-muted/50 cursor-pointer transition-colors">
+                            <input
+                              type="radio"
+                              name="resolution-reason"
+                              value={reason.value}
+                              checked={selectedReason === reason.value}
+                              onChange={(e) => setSelectedReason(e.target.value)}
+                              className="w-4 h-4 cursor-pointer"
+                            />
+                            <div className="flex-1">
+                              <p className="text-sm font-medium text-foreground">{reason.label}</p>
+                              <p className="text-xs text-muted-foreground">{reason.description}</p>
+                            </div>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">This action cannot be undone.</p>
                     <div className="flex gap-2">
                       <Button
                         onClick={async () => {
                           setIsResolving(true);
                           try {
-                            await deleteProblemMutation.mutateAsync({ problemId: selectedProblem.problem.id });
+                            await deleteProblemMutation.mutateAsync({ problemId: selectedProblem.problem.id, resolutionReason: selectedReason });
                             setSelectedProblem(null);
                             setShowResolveConfirm(false);
                             toast.success("Report resolved and deleted successfully");

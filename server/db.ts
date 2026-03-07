@@ -241,9 +241,16 @@ export async function updateProblemStatus(problemId: number, status: string) {
 /**
  * Delete a problem and its report
  */
-export async function deleteProblem(problemId: number) {
+export async function deleteProblem(problemId: number, resolutionReason?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
+
+  // Update problem with resolution reason and timestamp if provided
+  if (resolutionReason) {
+    await db.update(problems)
+      .set({ resolutionReason: resolutionReason as any, resolvedAt: new Date() })
+      .where(eq(problems.id, problemId));
+  }
 
   // Delete report first (cascade will handle it, but explicit is safer)
   await db.delete(reports).where(eq(reports.problemId, problemId));
