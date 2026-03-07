@@ -36,6 +36,8 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   // OAuth callback under /api/oauth/callback
   registerOAuthRoutes(app);
+  // Initialize WebSocket server for real-time updates (must be before listen)
+  wsManager.initialize(server);
   // tRPC API
   app.use(
     "/api/trpc",

@@ -243,3 +243,10 @@
 - [x] Implement error handling and fallback to polling
 - [x] Write vitest tests for WebSocket functionality
 - [ ] Test real-time updates on multiple browser tabs
+
+
+## Bug Fixes - WebSocket Connection Errors
+- [x] Fix WebSocket connection failure on community map
+- [x] Improve error handling and logging in useWebSocket hook
+- [x] Fix WebSocket Server constructor import issue
+- [x] Test WebSocket connection with proper error recovery

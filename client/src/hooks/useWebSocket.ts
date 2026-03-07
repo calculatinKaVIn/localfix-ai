@@ -116,8 +116,16 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
       };
 
       ws.onerror = (event) => {
-        console.error("[WebSocket] Error:", event);
-        const error = new Error("WebSocket error");
+        // Extract error details from event
+        let errorMessage = "WebSocket connection failed";
+        if (event instanceof Event) {
+          errorMessage = `WebSocket error: ${event.type}`;
+          if ((event as any).message) {
+            errorMessage += ` - ${(event as any).message}`;
+          }
+        }
+        console.error("[WebSocket] Error:", errorMessage);
+        const error = new Error(errorMessage);
         onError?.(error);
       };
 
@@ -137,13 +145,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
           }, delay);
+        } else if (autoReconnect && reconnectAttemptsRef.current >= maxReconnectAttempts) {
+          console.warn("[WebSocket] Max reconnection attempts reached, giving up");
+          const error = new Error("WebSocket: Max reconnection attempts reached");
+          onError?.(error);
         }
       };
 
       wsRef.current = ws;
     } catch (error) {
-      console.error("[WebSocket] Connection error:", error);
-      const err = error instanceof Error ? error : new Error(String(error));
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("[WebSocket] Connection error:", errorMessage);
+      const err = error instanceof Error ? error : new Error(errorMessage);
       onError?.(err);
       setIsConnecting(false);
     }

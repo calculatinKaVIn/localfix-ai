@@ -5,8 +5,7 @@
  * Broadcasts newly reported problems to all connected clients.
  */
 
-import WebSocket from "ws";
-import type { Server as WebSocketServer } from "ws";
+import { WebSocketServer } from "ws";
 import type { Server as HTTPServer } from "http";
 import type { Server as HTTPSServer } from "https";
 
@@ -49,17 +48,17 @@ declare global {
 }
 
 class WebSocketManager {
-  private wss: any | null = null;
-  private clients: Set<WebSocket> = new Set();
+  private wss: WebSocketServer | null = null;
+  private clients: Set<any> = new Set();
   private heartbeatInterval: NodeJS.Timeout | null = null;
 
   /**
    * Initialize WebSocket server
    */
   initialize(server: HTTPServer | HTTPSServer) {
-    this.wss = new (WebSocket as any).Server({ server, path: "/api/ws" });
+    this.wss = new WebSocketServer({ server, path: "/api/ws" });
 
-    this.wss.on("connection", (ws: WebSocket) => {
+    this.wss.on("connection", (ws: any) => {
       console.log(`[WebSocket] Client connected. Total clients: ${this.clients.size + 1}`);
       this.clients.add(ws);
 
@@ -83,14 +82,14 @@ class WebSocketManager {
       });
 
       // Handle errors
-      ws.on("error", (error) => {
+      ws.on("error", (error: any) => {
         console.error("[WebSocket] Client error:", error);
         this.clients.delete(ws);
       });
 
       // Respond to pings
       ws.on("pong", () => {
-        (ws as any).isAlive = true;
+        ws.isAlive = true;
       });
     });
 
@@ -103,7 +102,7 @@ class WebSocketManager {
   /**
    * Handle incoming WebSocket messages
    */
-  private handleMessage(ws: WebSocket, message: any) {
+  private handleMessage(ws: any, message: any) {
     switch (message.type) {
       case "ping":
         ws.send(JSON.stringify({ type: "pong" }));
@@ -131,8 +130,8 @@ class WebSocketManager {
     let failureCount = 0;
 
     this.clients.forEach((client) => {
-      if (client.readyState === WebSocket.OPEN) {
-        client.send(message, (error) => {
+      if (client.readyState === 1) { // WebSocket.OPEN
+        client.send(message, (error: any) => {
           if (error) {
             console.error("[WebSocket] Error sending message:", error);
             failureCount++;
@@ -154,14 +153,13 @@ class WebSocketManager {
   private startHeartbeat() {
     this.heartbeatInterval = setInterval(() => {
       this.clients.forEach((ws) => {
-        const wsAny = ws as any;
-        if (!wsAny.isAlive) {
+        if (!ws.isAlive) {
           ws.terminate();
           this.clients.delete(ws);
           return;
         }
 
-        wsAny.isAlive = false;
+        ws.isAlive = false;
         ws.ping();
       });
     }, 30000); // 30 seconds
