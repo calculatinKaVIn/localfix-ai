@@ -128,3 +128,16 @@
 - [x] Implement cost estimation for repairs
 - [x] Add affected stakeholder analysis
 - [x] Create comprehensive report with all analysis aspects
+
+
+## User Profile Section
+- [x] Create user profile page component
+- [x] Display user information (name, email, join date)
+- [x] Show total problems reported by user
+- [x] Create problems list with filtering by status
+- [x] Add sorting options (newest, oldest, priority)
+- [x] Display problem statistics (submitted, in progress, resolved, rejected)
+- [x] Show detailed problem view with full report
+- [x] Add ability to edit problem status (if applicable)
+- [x] Create profile navigation link in main navigation
+- [x] Add profile settings/preferences section

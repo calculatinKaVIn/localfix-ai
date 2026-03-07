@@ -9,6 +9,7 @@ import SubmitProblem from "./pages/SubmitProblem";
 import ProblemHistory from "./pages/ProblemHistory";
 import AdminDashboard from "./pages/AdminDashboard";
 import ProblemsMap from "./pages/ProblemsMap";
+import UserProfile from "./pages/UserProfile";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/submit"} component={SubmitProblem} />
       <Route path={"/history"} component={ProblemHistory} />
+      <Route path={"/profile"} component={UserProfile} />
       <Route path={"/map"} component={ProblemsMap} />
       {user?.role === "admin" && <Route path={"/admin"} component={AdminDashboard} />}
       <Route path={"/404"} component={NotFound} />

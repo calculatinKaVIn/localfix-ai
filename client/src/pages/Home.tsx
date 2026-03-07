@@ -33,6 +33,9 @@ export default function Home() {
                 <Button variant="ghost" onClick={() => setLocation("/map")}>
                   Map
                 </Button>
+                <Button variant="ghost" onClick={() => setLocation("/profile")}>
+                  Profile
+                </Button>
                 {user?.role === "admin" && (
                   <Button variant="ghost" onClick={() => setLocation("/admin")}>
                     Admin
