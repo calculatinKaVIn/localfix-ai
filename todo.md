@@ -466,3 +466,10 @@
 - [x] Add validation tests for category classification accuracy
 - [x] Verify "other" category handles non-standard issues correctly
 - [x] Test with various edge case reports (31 tests passing)
+
+
+## Typography - Lora Serif Font
+- [x] Research and select unique yet balanced serif font
+- [x] Add Lora font import to Google Fonts
+- [x] Update CSS to use Lora for body and headings
+- [x] Verify font renders correctly across all pages
