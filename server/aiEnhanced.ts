@@ -1,5 +1,6 @@
 import { invokeLLM } from "./_core/llm";
 import { ProblemClassification, priorityLevels, problemClassifications } from "../drizzle/schema";
+import { validateAndClassifyProblem } from "./services/categoryValidation";
 
 /**
  * Enhanced AI-generated report structure with comprehensive analysis
@@ -26,7 +27,13 @@ export interface EnhancedGeneratedReport {
 }
 
 /**
- * Generate comprehensive AI report with detailed analysis
+ * Generate comprehensive AI report with strict category validation
+ * 
+ * This function implements safeguards against AI hallucination:
+ * 1. Validates category matches predefined list (pothole, streetlight, trash, graffiti, sidewalk, water_damage, vegetation, other)
+ * 2. Defaults to "other" if no confident match found
+ * 3. Generates report based strictly on user input without fabricating details
+ * 4. For "other" category, creates custom report based on actual problem description
  */
 export async function generateEnhancedReport(
   userDescription: string,
@@ -35,25 +42,29 @@ export async function generateEnhancedReport(
   const classificationOptions = problemClassifications.join(", ");
   const priorityOptions = priorityLevels.join(", ");
 
-  const systemPrompt = `You are an expert urban infrastructure analyst with deep knowledge of city planning, public safety, and infrastructure management. Analyze the user's problem description and generate a comprehensive structured report.
+  // Step 1: Validate and classify the problem strictly
+  const validationResult = await validateAndClassifyProblem(userDescription);
+  const confirmedCategory = validationResult.category;
 
-You must respond with ONLY valid JSON in this exact format with all required fields.
+  // Step 2: Create system prompt that enforces strict category and prevents hallucination
+  const systemPrompt = `You are an expert urban infrastructure analyst. Your job is to analyze problem reports STRICTLY based on what the user provided.
 
-Guidelines:
-- Be specific and professional in all descriptions
-- Consider public safety as the primary concern
-- Map problems to appropriate city departments (Transportation, Parks, Utilities, Public Health, etc.)
-- Impact score: 1-30 (low), 31-70 (medium), 71-100 (high)
-- Urgency should be realistic based on the problem type and priority
-- Provide actionable recommendations
-- Consider environmental and community impacts
-- Identify affected stakeholder groups
-- Estimate repair costs realistically
-- Consider related infrastructure issues`;
+CRITICAL RULES:
+1. DO NOT hallucinate or fabricate details not mentioned by the user
+2. DO NOT add unrelated information or scenarios
+3. Only analyze what the user explicitly described
+4. For "other" category problems, create a custom analysis based on the actual description
+5. Keep all descriptions grounded in the user's input
+6. Be conservative with estimates - only provide what can be reasonably inferred
+
+Category: ${confirmedCategory}
+Category Description: ${getCategoryDescription(confirmedCategory)}
+
+If the problem is in "other" category, analyze it based on what the user actually described without forcing it into unrelated scenarios.`;
 
   const userMessage = imageUrl
-    ? `Please analyze this problem: "${userDescription}"\n\nImage provided: ${imageUrl}\n\nProvide a comprehensive analysis including safety considerations, environmental impact, affected stakeholders, repair cost estimates, and recommended solutions.`
-    : `Please analyze this problem: "${userDescription}"\n\nProvide a comprehensive analysis including safety considerations, environmental impact, affected stakeholders, repair cost estimates, and recommended solutions.`;
+    ? `Please analyze this problem: "${userDescription}"\n\nImage provided: ${imageUrl}\n\nProvide analysis based ONLY on what is described. Do not add unrelated information. Do not hallucinate details.`
+    : `Please analyze this problem: "${userDescription}"\n\nProvide analysis based ONLY on what is described. Do not add unrelated information. Do not hallucinate details.`;
 
   try {
     const response = await invokeLLM({
@@ -89,7 +100,7 @@ Guidelines:
               },
               description: {
                 type: "string",
-                description: "Professional description for city officials",
+                description: "Professional description for city officials based on user input",
               },
               riskLevel: {
                 type: "string",
@@ -112,27 +123,27 @@ Guidelines:
               },
               detailedAnalysis: {
                 type: "string",
-                description: "Comprehensive analysis of the problem including root causes and contributing factors",
+                description: "Analysis based on user description - do not fabricate details",
               },
               safetyConsiderations: {
                 type: "string",
-                description: "Public safety implications and hazards",
+                description: "Public safety implications based on what was described",
               },
               environmentalImpact: {
                 type: "string",
-                description: "Environmental and ecological considerations",
+                description: "Environmental considerations if applicable",
               },
               affectedStakeholders: {
                 type: "string",
-                description: "Groups affected by this problem (residents, businesses, pedestrians, etc.)",
+                description: "Groups affected by this problem",
               },
               estimatedRepairCost: {
                 type: "string",
-                description: "Estimated cost range for repair or mitigation",
+                description: "Estimated cost range if applicable",
               },
               recommendedSolution: {
                 type: "string",
-                description: "Recommended approach to address the problem",
+                description: "Recommended approach based on the problem",
               },
               timelineEstimate: {
                 type: "string",
@@ -141,7 +152,7 @@ Guidelines:
               relatedIssues: {
                 type: "array",
                 items: { type: "string" },
-                description: "Related infrastructure issues that may need attention",
+                description: "Related infrastructure issues if any",
               },
             },
             required: [
@@ -176,9 +187,12 @@ Guidelines:
     }
 
     const contentStr = typeof content === "string" ? content : JSON.stringify(content);
-    const report = JSON.parse(contentStr) as EnhancedGeneratedReport;
+    let report = JSON.parse(contentStr) as EnhancedGeneratedReport;
 
-    // Validate the response
+    // Step 3: Force the validated category to prevent AI from changing it
+    report.classification = confirmedCategory;
+
+    // Step 4: Validate the response
     if (!problemClassifications.includes(report.classification)) {
       throw new Error(`Invalid classification: ${report.classification}`);
     }
@@ -199,6 +213,9 @@ Guidelines:
       throw new Error("Related issues must be an array");
     }
 
+    // Step 5: Log validation details for debugging
+    console.log(`[Report Generation] Category validation: ${confirmedCategory} (confidence: ${validationResult.confidence}%, defaulted: ${validationResult.isDefaultedToOther})`);
+
     return report;
   } catch (error) {
     console.error("Error generating enhanced report:", error);
@@ -206,6 +223,23 @@ Guidelines:
       `Failed to generate report: ${error instanceof Error ? error.message : "Unknown error"}`
     );
   }
+}
+
+/**
+ * Get category description for system prompt
+ */
+function getCategoryDescription(category: ProblemClassification): string {
+  const descriptions: Record<ProblemClassification, string> = {
+    pothole: "Holes, cracks, or damage in road surfaces",
+    streetlight: "Broken, missing, or non-functional street lights",
+    trash: "Trash overflow, litter, or debris accumulation",
+    graffiti: "Graffiti or vandalism on public property",
+    sidewalk: "Sidewalk damage, cracks, or uneven surfaces",
+    water_damage: "Water damage, flooding, or drainage issues",
+    vegetation: "Overgrown vegetation, fallen trees, or branches",
+    other: "Any other urban infrastructure issue not covered by above categories"
+  };
+  return descriptions[category];
 }
 
 /**
