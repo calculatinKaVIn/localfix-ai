@@ -3,7 +3,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
-import { generateReport, validateProblemDescription } from "./ai";
+import { generateEnhancedReport, validateProblemDescription } from "./aiEnhanced";
 import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem } from "./db";
 import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
@@ -86,8 +86,8 @@ export const appRouter = router({
             });
           }
 
-          // Generate AI report
-          const report = await generateReport(input.description);
+          // Generate enhanced AI report with comprehensive analysis
+          const report = await generateEnhancedReport(input.description, input.imageUrl);
 
           // Create problem record
           const problemResult = await createProblem({
@@ -98,9 +98,9 @@ export const appRouter = router({
             status: "submitted",
           });
 
-          const problemId = (problemResult as any).insertId;
+          const problemId = (problemResult as any).insertId || (problemResult as any).id;
 
-          // Create report record
+          // Create report record with enhanced fields
           await createReport({
             problemId,
             classification: report.classification,
@@ -112,6 +112,14 @@ export const appRouter = router({
             affectedArea: report.affectedArea,
             suggestedUrgency: report.suggestedUrgency,
             impactScore: report.impactScore,
+            detailedAnalysis: report.detailedAnalysis,
+            safetyConsiderations: report.safetyConsiderations,
+            environmentalImpact: report.environmentalImpact,
+            affectedStakeholders: report.affectedStakeholders,
+            estimatedRepairCost: report.estimatedRepairCost,
+            recommendedSolution: report.recommendedSolution,
+            timelineEstimate: report.timelineEstimate,
+            relatedIssues: JSON.stringify(report.relatedIssues),
           });
 
           return {

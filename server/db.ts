@@ -162,6 +162,14 @@ export async function createProblem(data: InsertProblem) {
   if (!db) throw new Error("Database not available");
 
   const result = await db.insert(problems).values(data);
+  
+  // Get the inserted problem ID
+  const insertedProblems = await db.select().from(problems).where(eq(problems.userId, data.userId)).orderBy((p) => p.id).limit(1);
+  
+  if (insertedProblems.length > 0) {
+    return { insertId: insertedProblems[0].id, ...insertedProblems[0] };
+  }
+  
   return result;
 }
 
