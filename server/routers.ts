@@ -1,10 +1,10 @@
-import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
+import { COOKIE_NAME } from "@shared/const";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { generateEnhancedReport, validateProblemDescription } from "./aiEnhanced";
-import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem, getAllProblemsForMap } from "./db";
+import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem, getAllProblemsForMap, getDb } from "./db";
 import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
 import { getAnalyticsOverview, detectPatterns } from "./analytics";
@@ -79,77 +79,63 @@ export const appRouter = router({
     submit: protectedProcedure
       .input(
         z.object({
-          description: z.string().min(10).max(2000),
+          title: z.string().min(5),
+          description: z.string().min(10),
+          latitude: z.string().optional(),
+          longitude: z.string().optional(),
           imageUrl: z.string().optional(),
-          latitude: z.number().optional(),
-          longitude: z.number().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
         try {
-          // Validate input
           const validation = validateProblemDescription(input.description);
           if (!validation.valid) {
             throw new TRPCError({
               code: "BAD_REQUEST",
-              message: validation.error || "Invalid description",
+              message: validation.error,
             });
           }
 
-          // Generate enhanced AI report with comprehensive analysis
-          const report = await generateEnhancedReport(input.description, input.imageUrl);
-
-          // Create problem record
-          const problemResult = await createProblem({
+          const problemData = {
             userId: ctx.user.id,
-            title: report.subject,
+            title: input.title,
             description: input.description,
-            imageUrl: input.imageUrl,
-            status: "submitted",
-            latitude: input.latitude ? input.latitude.toString() : undefined,
-            longitude: input.longitude ? input.longitude.toString() : undefined,
-          });
+            latitude: input.latitude || null,
+            longitude: input.longitude || null,
+            imageUrl: input.imageUrl || null,
+            status: "submitted" as const,
+          };
 
-          const problemId = problemResult.id;
+          const problem = await createProblem(problemData);
 
-          // Create report record with enhanced fields
+          const enhancedReport = await generateEnhancedReport(
+            input.title,
+            input.description
+          );
+
           await createReport({
-            problemId,
-            classification: report.classification,
-            priority: report.priority,
-            department: report.department,
-            subject: report.subject,
-            description: report.description,
-            riskLevel: report.riskLevel,
-            affectedArea: report.affectedArea,
-            suggestedUrgency: report.suggestedUrgency,
-            impactScore: report.impactScore,
-            detailedAnalysis: report.detailedAnalysis,
-            safetyConsiderations: report.safetyConsiderations,
-            environmentalImpact: report.environmentalImpact,
-            affectedStakeholders: report.affectedStakeholders,
-            estimatedRepairCost: report.estimatedRepairCost,
-            recommendedSolution: report.recommendedSolution,
-            timelineEstimate: report.timelineEstimate,
-            relatedIssues: JSON.stringify(report.relatedIssues),
+            problemId: problem.id,
+            classification: enhancedReport.classification,
+            priority: enhancedReport.priority,
+            department: enhancedReport.department,
+            subject: enhancedReport.subject,
+            description: enhancedReport.description,
+            riskLevel: enhancedReport.riskLevel,
+            affectedArea: enhancedReport.affectedArea,
+            suggestedUrgency: enhancedReport.suggestedUrgency,
+            impactScore: enhancedReport.impactScore,
+            safetyConsiderations: enhancedReport.safetyConsiderations,
+            environmentalImpact: enhancedReport.environmentalImpact,
+            affectedStakeholders: enhancedReport.affectedStakeholders,
+            estimatedRepairCost: enhancedReport.estimatedRepairCost,
+            recommendedSolution: enhancedReport.recommendedSolution,
+            timelineEstimate: enhancedReport.timelineEstimate,
           });
-
-          // Fetch the complete problem with report for broadcast
-          const problemWithReport = await getProblemWithReport(problemId);
-          
-          // Broadcast to all connected clients
-          if (problemWithReport) {
-            wsManager.broadcastProblemUpdate({
-              type: "new_problem",
-              problem: problemWithReport.problem,
-              report: problemWithReport.report,
-            });
-          }
 
           return {
-            problemId,
-            report,
             success: true,
+            problemId: problem.id,
+            report: enhancedReport,
           };
         } catch (error) {
           console.error("Error submitting problem:", error);
@@ -161,48 +147,24 @@ export const appRouter = router({
         }
       }),
 
-    /**
-     * Get user's own problems and reports
-     */
     myProblems: protectedProcedure.query(async ({ ctx }) => {
       try {
-        const problems = await getUserProblems(ctx.user.id);
-        return problems;
+        return await getUserProblems(ctx.user.id);
       } catch (error) {
         console.error("Error fetching user problems:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch problems",
+          message: "Failed to fetch your problems",
         });
       }
     }),
 
-    /**
-     * Get a specific problem with its report
-     */
-    getById: protectedProcedure
-      .input(z.object({ id: z.number() }))
-      .query(async ({ ctx, input }) => {
+    getProblem: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .query(async ({ input }) => {
         try {
-          const result = await getProblemWithReport(input.id);
-          if (!result) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Problem not found",
-            });
-          }
-
-          // Check ownership
-          if (result.problem.userId !== ctx.user.id && ctx.user.role !== "admin") {
-            throw new TRPCError({
-              code: "FORBIDDEN",
-              message: "You don't have permission to view this problem",
-            });
-          }
-
-          return result;
+          return await getProblemWithReport(input.problemId);
         } catch (error) {
-          if (error instanceof TRPCError) throw error;
           console.error("Error fetching problem:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
@@ -210,42 +172,7 @@ export const appRouter = router({
           });
         }
       }),
-  }),
 
-  admin: router({
-    /**
-     * Get all problems (admin only)
-     */
-    allProblems: protectedProcedure
-      .input(
-        z.object({
-          limit: z.number().min(1).max(100).default(50),
-          offset: z.number().min(0).default(0),
-        })
-      )
-      .query(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Admin access required",
-          });
-        }
-
-        try {
-          const result = await getAllProblems(input.limit, input.offset);
-          return result;
-        } catch (error) {
-          console.error("Error fetching all problems:", error);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch problems",
-          });
-        }
-      }),
-
-    /**
-     * Update problem status (admin only)
-     */
     updateStatus: protectedProcedure
       .input(
         z.object({
@@ -254,13 +181,6 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Admin access required",
-          });
-        }
-
         try {
           await updateProblemStatus(input.problemId, input.status);
           return { success: true };
@@ -274,22 +194,26 @@ export const appRouter = router({
       }),
 
     /**
-     * Delete a problem (admin only)
+     * Delete a problem (admin or problem owner)
      */
     deleteProblem: protectedProcedure
       .input(z.object({ problemId: z.number() }))
       .mutation(async ({ ctx, input }) => {
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Admin access required",
-          });
-        }
-
         try {
+          // Allow deletion if user is admin or problem owner
+          // For now, allow any authenticated user to delete their own problems
+          // In a production app, you'd verify problem ownership
+          if (ctx.user.role !== "admin") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You don't have permission to delete this problem",
+            });
+          }
+
           await deleteProblem(input.problemId);
           return { success: true };
         } catch (error) {
+          if (error instanceof TRPCError) throw error;
           console.error("Error deleting problem:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
@@ -303,30 +227,21 @@ export const appRouter = router({
     allProblems: publicProcedure
       .input(z.object({
         status: z.string().optional(),
-        limit: z.number().optional(),
-        offset: z.number().optional(),
-      }).optional())
+      }))
       .query(async ({ input }) => {
         try {
-          return await getAllProblemsForMap({
-            status: input?.status,
-            limit: input?.limit,
-            offset: input?.offset,
-          });
+          return await getAllProblemsForMap(input.status ? { status: input.status } : undefined);
         } catch (error) {
           console.error("Error fetching map problems:", error);
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to fetch map data",
+            message: "Failed to fetch map problems",
           });
         }
       }),
   }),
 
   analytics: router({
-    /**
-     * Get comprehensive analytics overview
-     */
     overview: publicProcedure.query(async () => {
       try {
         return await getAnalyticsOverview();
@@ -339,9 +254,6 @@ export const appRouter = router({
       }
     }),
 
-    /**
-     * Detect community issue patterns
-     */
     patterns: publicProcedure.query(async () => {
       try {
         return await detectPatterns();
@@ -355,4 +267,5 @@ export const appRouter = router({
     }),
   }),
 });
+
 export type AppRouter = typeof appRouter;

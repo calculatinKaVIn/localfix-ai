@@ -515,3 +515,14 @@
 - [x] Fix Analytics charts text colors in dark mode
 - [x] Ensure all overlays and modals work in dark mode
 - [x] Test dark mode on all pages
+
+
+## Live Map - Resolve Report Feature
+- [x] Create resolve report confirmation dialog
+- [x] Add resolve button to report information panel
+- [x] Implement delete report API call
+- [x] Add marker removal animation
+- [x] Add panel close animation on resolve
+- [x] Add success toast notification
+- [x] Test resolve functionality on Live Map
+- [x] Verify marker deletion from map

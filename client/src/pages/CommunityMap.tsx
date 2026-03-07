@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin, X, AlertCircle, Loader2, TrendingUp, Calendar, User,
-  Shield, Leaf, Users, DollarSign, Clock, Filter, RefreshCw, Layers, Wifi, WifiOff
+  Shield, Leaf, Users, DollarSign, Clock, Filter, RefreshCw, Layers, Wifi, WifiOff, CheckCircle2
 } from "lucide-react";
 
 // Status color config
@@ -74,8 +74,11 @@ export default function CommunityMap() {
   const [wsConnected, setWsConnected] = useState(false);
   const [showImageModal, setShowImageModal] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+  const [showResolveConfirm, setShowResolveConfirm] = useState(false);
+  const [isResolving, setIsResolving] = useState(false);
 
   const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery();
+  const deleteProblemMutation = trpc.problems.deleteProblem.useMutation();
 
   // Get user's geolocation on mount
   useEffect(() => {
@@ -520,6 +523,62 @@ export default function CommunityMap() {
                   )}
                 </>
               )}
+
+              {/* Resolve Report Button */}
+              <div className="border-t border-border pt-4 mt-4">
+                {!showResolveConfirm ? (
+                  <Button
+                    onClick={() => setShowResolveConfirm(true)}
+                    className="w-full bg-green-600 hover:bg-green-700 text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <CheckCircle2 className="w-4 h-4" />
+                    Resolve Report
+                  </Button>
+                ) : (
+                  <div className="space-y-3 animate-fade-in">
+                    <p className="text-sm font-medium text-foreground">Are you sure you want to resolve this report? This will delete it from the map.</p>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={async () => {
+                          setIsResolving(true);
+                          try {
+                            await deleteProblemMutation.mutateAsync({ problemId: selectedProblem.problem.id });
+                            setSelectedProblem(null);
+                            setShowResolveConfirm(false);
+                            toast.success("Report resolved and deleted successfully");
+                            refetch();
+                          } catch (error) {
+                            toast.error("Failed to resolve report");
+                          } finally {
+                            setIsResolving(false);
+                          }
+                        }}
+                        disabled={isResolving}
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white transition-all duration-300 hover:shadow-lg hover:-translate-y-0.5 active:scale-95 disabled:opacity-50"
+                      >
+                        {isResolving ? (
+                          <>
+                            <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                            Resolving...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle2 className="w-4 h-4 mr-2" />
+                            Yes, Resolve
+                          </>
+                        )}
+                      </Button>
+                      <Button
+                        onClick={() => setShowResolveConfirm(false)}
+                        variant="outline"
+                        className="flex-1 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

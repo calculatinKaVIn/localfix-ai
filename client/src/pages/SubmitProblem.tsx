@@ -27,6 +27,7 @@ interface GeneratedReport {
 }
 
 export default function SubmitProblem() {
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -64,6 +65,11 @@ export default function SubmitProblem() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (!title.trim()) {
+      toast.error("Please enter a problem title");
+      return;
+    }
+
     if (!description.trim()) {
       toast.error("Please describe the problem");
       return;
@@ -78,14 +84,16 @@ export default function SubmitProblem() {
 
     try {
       const result = await submitMutation.mutateAsync({
+        title: title.trim(),
         description: description.trim(),
         imageUrl: imageUrl || undefined,
-        latitude: latitude || undefined,
-        longitude: longitude || undefined,
+        latitude: latitude ? String(latitude) : undefined,
+        longitude: longitude ? String(longitude) : undefined,
       });
 
       setGeneratedReport(result.report);
       setProblemId(result.problemId);
+      setTitle("");
       setDescription("");
       setImageUrl(null);
       toast.success("Problem submitted successfully!");
@@ -287,6 +295,20 @@ export default function SubmitProblem() {
                 </div>
               </div>
             )}
+
+            {/* Title */}
+            <div>
+              <label className="block text-sm font-medium mb-2">Problem Title</label>
+              <input
+                type="text"
+                placeholder="Brief title for the problem (e.g., 'Pothole Near School')"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                className="w-full px-4 py-2 border border-border rounded-lg bg-background focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all"
+                disabled={isLoading}
+              />
+              <p className="text-xs text-muted-foreground mt-1">{title.length} characters</p>
+            </div>
 
             {/* Description */}
             <div>
