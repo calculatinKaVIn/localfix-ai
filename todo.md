@@ -385,3 +385,13 @@
 - [x] Fix Vite HMR WebSocket connection to production URL
 - [x] Configure HMR settings for proper browser-to-server communication
 - [x] Test WebSocket connection stability
+
+
+## Bug Fixes - WebSocket Connection Failures
+- [x] Diagnose WebSocket connection failure on community map
+- [x] Fix WebSocket URL configuration for production environment
+- [x] Improve error handling and reconnection logic
+- [x] Increase heartbeat timeout from 30s to 45s
+- [x] Prevent duplicate error handling in error and close events
+- [x] Reset reconnection attempts after max reached
+- [x] Test WebSocket stability with 12 passing tests

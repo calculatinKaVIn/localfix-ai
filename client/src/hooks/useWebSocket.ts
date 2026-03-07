@@ -125,8 +125,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           }
         }
         console.error("[WebSocket] Error:", errorMessage);
-        const error = new Error(errorMessage);
-        onError?.(error);
+        // Don't call onError here - let onclose handle reconnection
+        // This prevents duplicate error handling
       };
 
       ws.onclose = () => {
@@ -149,6 +149,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           console.warn("[WebSocket] Max reconnection attempts reached, giving up");
           const error = new Error("WebSocket: Max reconnection attempts reached");
           onError?.(error);
+          // Reset attempts after notifying error so user can manually reconnect
+          reconnectAttemptsRef.current = 0;
         }
       };
 

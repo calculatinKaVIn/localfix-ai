@@ -154,6 +154,7 @@ class WebSocketManager {
     this.heartbeatInterval = setInterval(() => {
       this.clients.forEach((ws) => {
         if (!ws.isAlive) {
+          console.log("[WebSocket] Terminating unresponsive connection");
           ws.terminate();
           this.clients.delete(ws);
           return;
@@ -162,7 +163,7 @@ class WebSocketManager {
         ws.isAlive = false;
         ws.ping();
       });
-    }, 30000); // 30 seconds
+    }, 45000); // 45 seconds - increased from 30s to give clients more time
   }
 
   /**
