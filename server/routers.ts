@@ -11,11 +11,13 @@ import { getAnalyticsOverview, detectPatterns } from "./analytics";
 import wsManager from "./websocket";
 import { aiAnalysisRouter } from "./routers/aiAnalysis";
 import { translationRouter } from "./routers/translation";
+import { photoReportingRouter } from "./routers/photoReporting";
 
 export const appRouter = router({
   system: systemRouter,
   ai: aiAnalysisRouter,
   translation: translationRouter,
+  photoReporting: photoReportingRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
