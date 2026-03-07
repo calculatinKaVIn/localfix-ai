@@ -8,6 +8,7 @@ import { createProblem, createReport, getUserProblems, getAllProblems, getProble
 import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
 import { getAnalyticsOverview, detectPatterns } from "./analytics";
+import wsManager from "./websocket";
 
 export const appRouter = router({
   system: systemRouter,
@@ -126,6 +127,18 @@ export const appRouter = router({
             timelineEstimate: report.timelineEstimate,
             relatedIssues: JSON.stringify(report.relatedIssues),
           });
+
+          // Fetch the complete problem with report for broadcast
+          const problemWithReport = await getProblemWithReport(problemId);
+          
+          // Broadcast to all connected clients
+          if (problemWithReport) {
+            wsManager.broadcastProblemUpdate({
+              type: "new_problem",
+              problem: problemWithReport.problem,
+              report: problemWithReport.report,
+            });
+          }
 
           return {
             problemId,

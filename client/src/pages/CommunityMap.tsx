@@ -1,12 +1,14 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { MapView } from "@/components/Map";
 import { trpc } from "@/lib/trpc";
+import { useWebSocket } from "@/hooks/useWebSocket";
+import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   MapPin, X, AlertCircle, Loader2, TrendingUp, Calendar, User,
-  Shield, Leaf, Users, DollarSign, Clock, Filter, RefreshCw, Layers
+  Shield, Leaf, Users, DollarSign, Clock, Filter, RefreshCw, Layers, Wifi, WifiOff
 } from "lucide-react";
 
 // Status color config
@@ -61,10 +63,12 @@ type MapProblem = {
 export default function CommunityMap() {
   const mapRef = useRef<google.maps.Map | null>(null);
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
+  const problemsRef = useRef<MapProblem[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<MapProblem | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapReady, setMapReady] = useState(false);
+  const [wsConnected, setWsConnected] = useState(false);
 
   const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery();
 
@@ -77,6 +81,13 @@ export default function CommunityMap() {
       );
     }
   }, []);
+
+  // Update problems ref when data changes
+  useEffect(() => {
+    if (allProblems) {
+      problemsRef.current = allProblems as MapProblem[];
+    }
+  }, [allProblems]);
 
   // Build SVG pin element for a given color
   const buildPinElement = useCallback((color: string, size = 36) => {
@@ -136,10 +147,86 @@ export default function CommunityMap() {
     }
   }, [activeFilter, buildPinElement]);
 
+  // Handle real-time problem updates from WebSocket
+  const handleProblemUpdate = useCallback((update: any) => {
+    console.log("[CommunityMap] Received update:", update.type);
+    
+    if (update.type === "new_problem") {
+      // Add new problem to the list
+      const newProblem: MapProblem = {
+        problem: update.problem,
+        report: update.report,
+        userName: null,
+      };
+
+      // Check if problem already exists
+      const exists = problemsRef.current.some(p => p.problem.id === newProblem.problem.id);
+      if (!exists) {
+        problemsRef.current = [newProblem, ...problemsRef.current];
+        
+        // Re-place markers on map
+        if (mapRef.current && mapReady) {
+          placeMarkers(mapRef.current, problemsRef.current);
+        }
+        
+        // Show toast notification
+        toast.success(`New problem reported: ${newProblem.problem.title}`);
+      }
+    } else if (update.type === "problem_updated") {
+      // Update existing problem
+      const index = problemsRef.current.findIndex(p => p.problem.id === update.problem.id);
+      if (index !== -1) {
+        problemsRef.current[index] = {
+          problem: update.problem,
+          report: update.report,
+          userName: problemsRef.current[index].userName,
+        };
+        
+        // Re-place markers on map
+        if (mapRef.current && mapReady) {
+          placeMarkers(mapRef.current, problemsRef.current);
+        }
+        
+        toast.info(`Problem updated: ${update.problem.title}`);
+      }
+    } else if (update.type === "problem_deleted") {
+      // Remove deleted problem
+      problemsRef.current = problemsRef.current.filter(p => p.problem.id !== update.problem.id);
+      
+      // Re-place markers on map
+      if (mapRef.current && mapReady) {
+        placeMarkers(mapRef.current, problemsRef.current);
+      }
+      
+      if (selectedProblem?.problem.id === update.problem.id) {
+        setSelectedProblem(null);
+      }
+      
+      toast.info(`Problem removed: ${update.problem.title}`);
+    }
+  }, [mapReady, placeMarkers]);
+
+  // Initialize WebSocket connection
+  useWebSocket({
+    onProblemUpdate: handleProblemUpdate,
+    onConnect: () => {
+      setWsConnected(true);
+      console.log("[CommunityMap] WebSocket connected");
+    },
+    onDisconnect: () => {
+      setWsConnected(false);
+      console.log("[CommunityMap] WebSocket disconnected");
+    },
+    onError: (error) => {
+      console.error("[CommunityMap] WebSocket error:", error);
+    },
+  });
+
   // Re-place markers when data or filter changes
   useEffect(() => {
     if (mapRef.current && allProblems && mapReady) {
-      placeMarkers(mapRef.current, allProblems as MapProblem[]);
+      problemsRef.current = allProblems as MapProblem[];
+      placeMarkers(mapRef.current, problemsRef.current);
     }
   }, [allProblems, activeFilter, mapReady, placeMarkers]);
 
@@ -153,7 +240,7 @@ export default function CommunityMap() {
     }
   }, [userLocation]);
 
-  const problemsWithLocation = (allProblems as MapProblem[] | undefined)?.filter(
+  const problemsWithLocation = problemsRef.current?.filter(
     p => p.problem.latitude && p.problem.longitude
   ) ?? [];
 
@@ -181,8 +268,27 @@ export default function CommunityMap() {
             </div>
           </div>
 
-          {/* Filters */}
+          {/* Connection Status & Filters */}
           <div className="flex items-center gap-2 flex-wrap">
+            {/* WebSocket Status */}
+            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium ${
+              wsConnected 
+                ? "bg-green-100 text-green-700" 
+                : "bg-amber-100 text-amber-700"
+            }`}>
+              {wsConnected ? (
+                <>
+                  <Wifi className="w-3.5 h-3.5" />
+                  Live
+                </>
+              ) : (
+                <>
+                  <WifiOff className="w-3.5 h-3.5" />
+                  Offline
+                </>
+              )}
+            </div>
+
             <Filter className="w-4 h-4 text-muted-foreground" />
             {["all", "submitted", "in_progress", "resolved", "rejected"].map(f => {
               const cfg = f === "all" ? null : STATUS_CONFIG[f];
@@ -254,203 +360,141 @@ export default function CommunityMap() {
           <div className="w-[380px] flex-shrink-0 border-l border-border bg-white overflow-y-auto">
             {/* Panel Header */}
             <div className="sticky top-0 bg-white border-b border-border px-5 py-4 flex items-start justify-between z-10">
-              <div className="flex-1 pr-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <span
-                    className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold border ${
-                      STATUS_CONFIG[selectedProblem.problem.status]?.bg
-                    } ${STATUS_CONFIG[selectedProblem.problem.status]?.color} ${
-                      STATUS_CONFIG[selectedProblem.problem.status]?.border
-                    }`}
-                  >
-                    {STATUS_CONFIG[selectedProblem.problem.status]?.label ?? selectedProblem.problem.status}
-                  </span>
+              <div className="flex-1">
+                <h2 className="font-bold text-lg mb-1">{selectedProblem.problem.title}</h2>
+                <div className="flex gap-2 flex-wrap">
+                  <Badge className={`${STATUS_CONFIG[selectedProblem.problem.status]?.bg} ${STATUS_CONFIG[selectedProblem.problem.status]?.color}`}>
+                    {STATUS_CONFIG[selectedProblem.problem.status]?.label}
+                  </Badge>
                   {selectedProblem.report && (
-                    <span
-                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold capitalize ${
-                        PRIORITY_CONFIG[selectedProblem.report.priority]?.bg
-                      } ${PRIORITY_CONFIG[selectedProblem.report.priority]?.color}`}
-                    >
-                      {selectedProblem.report.priority}
-                    </span>
+                    <Badge className={`${PRIORITY_CONFIG[selectedProblem.report.priority]?.bg} ${PRIORITY_CONFIG[selectedProblem.report.priority]?.color}`}>
+                      {PRIORITY_CONFIG[selectedProblem.report.priority]?.label}
+                    </Badge>
                   )}
                 </div>
-                <h2 className="text-base font-bold text-foreground leading-snug">
-                  {selectedProblem.problem.title}
-                </h2>
               </div>
-              <button
-                onClick={() => setSelectedProblem(null)}
-                className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-muted transition-colors flex-shrink-0"
-              >
-                <X className="w-4 h-4 text-muted-foreground" />
+              <button onClick={() => setSelectedProblem(null)} className="text-muted-foreground hover:text-foreground">
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="px-5 py-4 space-y-5">
-              {/* Meta */}
-              <div className="flex flex-col gap-2 text-sm">
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <User className="w-4 h-4 flex-shrink-0" />
-                  <span>Reported by <span className="font-medium text-foreground">{selectedProblem.userName ?? "Anonymous"}</span></span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="w-4 h-4 flex-shrink-0" />
-                  <span>{formatDate(selectedProblem.problem.createdAt)}</span>
-                </div>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <MapPin className="w-4 h-4 flex-shrink-0" />
-                  <span className="font-mono text-xs">
-                    {parseFloat(selectedProblem.problem.latitude!).toFixed(5)}, {parseFloat(selectedProblem.problem.longitude!).toFixed(5)}
-                  </span>
-                </div>
+            {/* Panel Content */}
+            <div className="p-5 space-y-5">
+              {/* Problem Description */}
+              <div>
+                <p className="text-sm font-medium text-muted-foreground mb-2">Description</p>
+                <p className="text-sm leading-relaxed">{selectedProblem.problem.description}</p>
               </div>
 
-              {/* Image */}
+              {/* Metadata */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-background rounded p-3">
+                  <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5" /> Submitted
+                  </p>
+                  <p className="text-xs font-medium">{formatDate(selectedProblem.problem.createdAt)}</p>
+                </div>
+                {selectedProblem.report && (
+                  <div className="bg-background rounded p-3">
+                    <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
+                      <TrendingUp className="w-3.5 h-3.5" /> Impact Score
+                    </p>
+                    <p className="text-sm font-bold text-primary">{selectedProblem.report.impactScore}/100</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Problem Image */}
               {selectedProblem.problem.imageUrl && (
-                <div className="rounded-xl overflow-hidden border border-border">
-                  <img
-                    src={selectedProblem.problem.imageUrl}
-                    alt="Problem photo"
-                    className="w-full h-44 object-cover"
-                  />
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground mb-2">Photo</p>
+                  <img src={selectedProblem.problem.imageUrl} alt="Problem" className="w-full rounded-lg" />
                 </div>
               )}
 
-              {/* Description */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Original Report</p>
-                <p className="text-sm text-foreground leading-relaxed">{selectedProblem.problem.description}</p>
-              </div>
-
-              {selectedProblem.report ? (
+              {/* AI Report */}
+              {selectedProblem.report && (
                 <>
-                  {/* AI Report */}
-                  <div className="bg-primary/5 rounded-xl p-4 border border-primary/20">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-primary mb-3">AI Analysis</p>
-                    <div className="grid grid-cols-2 gap-3 text-sm">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-0.5">Classification</p>
-                        <p className="font-semibold text-foreground capitalize">{selectedProblem.report.classification}</p>
+                  <div className="border-t border-border pt-4">
+                    <p className="text-sm font-semibold mb-3">AI Analysis</p>
+                    
+                    <div className="space-y-3">
+                      <div className="bg-background rounded p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Classification</p>
+                        <p className="text-sm font-medium capitalize">{selectedProblem.report.classification.replace(/_/g, " ")}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-0.5">Department</p>
-                        <p className="font-semibold text-foreground">{selectedProblem.report.department}</p>
+
+                      <div className="bg-background rounded p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Department</p>
+                        <p className="text-sm font-medium">{selectedProblem.report.department}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-0.5">Affected Area</p>
-                        <p className="font-semibold text-foreground">{selectedProblem.report.affectedArea}</p>
+
+                      <div className="bg-background rounded p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Risk Level</p>
+                        <p className="text-sm font-medium capitalize">{selectedProblem.report.riskLevel}</p>
                       </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-0.5">Urgency</p>
-                        <p className="font-semibold text-foreground">{selectedProblem.report.suggestedUrgency}</p>
+
+                      <div className="bg-background rounded p-3">
+                        <p className="text-xs text-muted-foreground mb-1">Affected Area</p>
+                        <p className="text-sm font-medium">{selectedProblem.report.affectedArea}</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Impact Score */}
-                  <div className="flex items-center gap-4 bg-muted/50 rounded-xl p-4">
-                    <div className="flex-1">
-                      <p className="text-xs text-muted-foreground mb-1">Impact Score</p>
-                      <div className="flex items-end gap-1">
-                        <span className="text-3xl font-bold text-foreground">{selectedProblem.report.impactScore}</span>
-                        <span className="text-sm text-muted-foreground mb-1">/100</span>
-                      </div>
-                    </div>
-                    <TrendingUp className={`w-8 h-8 ${
-                      selectedProblem.report.impactScore >= 80 ? "text-red-500" :
-                      selectedProblem.report.impactScore >= 60 ? "text-orange-500" :
-                      selectedProblem.report.impactScore >= 40 ? "text-blue-500" : "text-green-500"
-                    }`} />
-                  </div>
-
-                  {/* AI Description */}
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">AI Description</p>
-                    <p className="text-sm text-foreground leading-relaxed">{selectedProblem.report.description}</p>
-                  </div>
-
-                  {/* Safety */}
+                  {/* Safety & Environmental */}
                   {selectedProblem.report.safetyConsiderations && (
-                    <div className="bg-red-50 rounded-xl p-4 border border-red-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Shield className="w-4 h-4 text-red-600" />
-                        <p className="text-xs font-semibold text-red-900">Safety Considerations</p>
-                      </div>
-                      <p className="text-sm text-red-800">{selectedProblem.report.safetyConsiderations}</p>
+                    <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-red-700 mb-1 flex items-center gap-1">
+                        <Shield className="w-3.5 h-3.5" /> Safety Considerations
+                      </p>
+                      <p className="text-xs text-red-600">{selectedProblem.report.safetyConsiderations}</p>
                     </div>
                   )}
 
-                  {/* Environmental */}
                   {selectedProblem.report.environmentalImpact && (
-                    <div className="bg-green-50 rounded-xl p-4 border border-green-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Leaf className="w-4 h-4 text-green-600" />
-                        <p className="text-xs font-semibold text-green-900">Environmental Impact</p>
-                      </div>
-                      <p className="text-sm text-green-800">{selectedProblem.report.environmentalImpact}</p>
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-green-700 mb-1 flex items-center gap-1">
+                        <Leaf className="w-3.5 h-3.5" /> Environmental Impact
+                      </p>
+                      <p className="text-xs text-green-600">{selectedProblem.report.environmentalImpact}</p>
                     </div>
                   )}
 
-                  {/* Stakeholders */}
                   {selectedProblem.report.affectedStakeholders && (
-                    <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Users className="w-4 h-4 text-blue-600" />
-                        <p className="text-xs font-semibold text-blue-900">Affected Stakeholders</p>
-                      </div>
-                      <p className="text-sm text-blue-800">{selectedProblem.report.affectedStakeholders}</p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-blue-700 mb-1 flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" /> Affected Stakeholders
+                      </p>
+                      <p className="text-xs text-blue-600">{selectedProblem.report.affectedStakeholders}</p>
                     </div>
                   )}
 
-                  {/* Cost & Timeline */}
-                  {(selectedProblem.report.estimatedRepairCost || selectedProblem.report.timelineEstimate) && (
-                    <div className="grid grid-cols-2 gap-3">
-                      {selectedProblem.report.estimatedRepairCost && (
-                        <div className="bg-muted/50 rounded-xl p-3">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <DollarSign className="w-3.5 h-3.5 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">Est. Cost</p>
-                          </div>
-                          <p className="text-sm font-semibold text-foreground">{selectedProblem.report.estimatedRepairCost}</p>
-                        </div>
-                      )}
-                      {selectedProblem.report.timelineEstimate && (
-                        <div className="bg-muted/50 rounded-xl p-3">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                            <p className="text-xs text-muted-foreground">Timeline</p>
-                          </div>
-                          <p className="text-sm font-semibold text-foreground">{selectedProblem.report.timelineEstimate}</p>
-                        </div>
-                      )}
+                  {selectedProblem.report.estimatedRepairCost && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-amber-700 mb-1 flex items-center gap-1">
+                        <DollarSign className="w-3.5 h-3.5" /> Estimated Repair Cost
+                      </p>
+                      <p className="text-xs text-amber-600">{selectedProblem.report.estimatedRepairCost}</p>
                     </div>
                   )}
 
-                  {/* Recommended Solution */}
+                  {selectedProblem.report.timelineEstimate && (
+                    <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-purple-700 mb-1 flex items-center gap-1">
+                        <Clock className="w-3.5 h-3.5" /> Timeline Estimate
+                      </p>
+                      <p className="text-xs text-purple-600">{selectedProblem.report.timelineEstimate}</p>
+                    </div>
+                  )}
+
                   {selectedProblem.report.recommendedSolution && (
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Recommended Solution</p>
-                      <p className="text-sm text-foreground leading-relaxed">{selectedProblem.report.recommendedSolution}</p>
+                    <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+                      <p className="text-xs font-semibold text-primary mb-1">Recommended Solution</p>
+                      <p className="text-xs text-primary/80">{selectedProblem.report.recommendedSolution}</p>
                     </div>
                   )}
                 </>
-              ) : (
-                <div className="flex items-center gap-3 bg-muted/50 rounded-xl p-4">
-                  <AlertCircle className="w-5 h-5 text-muted-foreground flex-shrink-0" />
-                  <p className="text-sm text-muted-foreground">AI report not yet available for this problem.</p>
-                </div>
               )}
-
-              {/* Report to Submit */}
-              <Button
-                className="w-full"
-                variant="outline"
-                onClick={() => window.location.href = "/submit"}
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                Report a Nearby Problem
-              </Button>
             </div>
           </div>
         )}

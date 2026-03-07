@@ -231,3 +231,15 @@
 - [x] Add error handling with try-catch in Map component
 - [x] Write and pass vitest tests verifying the fix
 - [x] Verify /profile page no longer throws duplicate API error
+
+
+## Real-time WebSocket Updates for Live Map
+- [x] Set up WebSocket server with ws library
+- [x] Create WebSocket event handlers for problem submissions
+- [x] Implement problem broadcast to all connected clients
+- [x] Add real-time client-side map marker updates
+- [x] Create connection status indicator in UI
+- [x] Add reconnection logic with exponential backoff
+- [x] Implement error handling and fallback to polling
+- [x] Write vitest tests for WebSocket functionality
+- [ ] Test real-time updates on multiple browser tabs
