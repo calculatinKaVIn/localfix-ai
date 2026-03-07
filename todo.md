@@ -141,3 +141,21 @@
 - [x] Add ability to edit problem status (if applicable)
 - [x] Create profile navigation link in main navigation
 - [x] Add profile settings/preferences section
+
+
+## Enhanced Image Upload Backend
+- [x] Implement S3 upload with proper error handling
+- [x] Add image validation (size, format, dimensions)
+- [x] Create image processing pipeline
+- [x] Add image URL generation with CDN support
+- [x] Implement image deletion on problem removal
+- [x] Add image metadata storage
+
+## Interactive Map for Adding Problems
+- [x] Create interactive map component with click-to-add functionality
+- [x] Implement geolocation to show user's current location
+- [x] Add nearby incidents display within radius
+- [x] Create location-based problem submission form
+- [x] Add map search functionality by address
+- [ ] Implement problem clustering for performance
+- [x] Add real-time incident updates on map

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,23 @@ export default function SubmitProblem() {
   const [isLoading, setIsLoading] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
   const [problemId, setProblemId] = useState<number | null>(null);
+  const [latitude, setLatitude] = useState<number | null>(null);
+  const [longitude, setLongitude] = useState<number | null>(null);
+
+  // Load location from session storage if coming from interactive map
+  useEffect(() => {
+    const storedLocation = sessionStorage.getItem("problemLocation");
+    if (storedLocation) {
+      try {
+        const location = JSON.parse(storedLocation);
+        setLatitude(location.latitude);
+        setLongitude(location.longitude);
+        sessionStorage.removeItem("problemLocation");
+      } catch (error) {
+        console.error("Error parsing location:", error);
+      }
+    }
+  }, []);
 
   const submitMutation = trpc.problems.submit.useMutation();
 
@@ -47,6 +64,8 @@ export default function SubmitProblem() {
       const result = await submitMutation.mutateAsync({
         description: description.trim(),
         imageUrl: imageUrl || undefined,
+        latitude: latitude || undefined,
+        longitude: longitude || undefined,
       });
 
       setGeneratedReport(result.report);

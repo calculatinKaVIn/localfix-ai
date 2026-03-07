@@ -73,6 +73,8 @@ export const appRouter = router({
         z.object({
           description: z.string().min(10).max(2000),
           imageUrl: z.string().optional(),
+          latitude: z.number().optional(),
+          longitude: z.number().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -96,6 +98,8 @@ export const appRouter = router({
             description: input.description,
             imageUrl: input.imageUrl,
             status: "submitted",
+            latitude: input.latitude ? input.latitude.toString() : undefined,
+            longitude: input.longitude ? input.longitude.toString() : undefined,
           });
 
           const problemId = (problemResult as any).insertId || (problemResult as any).id;
