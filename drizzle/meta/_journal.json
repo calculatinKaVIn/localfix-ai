@@ -43,6 +43,13 @@
       "when": 1772914594555,
       "tag": "0005_third_shotgun",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1772922630379,
+      "tag": "0006_conscious_morlun",
+      "breakpoints": true
     }
   ]
 }

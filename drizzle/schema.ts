@@ -101,3 +101,49 @@ export const reports = mysqlTable('reports', {
 
 export type Report = typeof reports.$inferSelect;
 export type InsertReport = typeof reports.$inferInsert;
+
+/**
+ * Image Analytics table - tracks image loading events and failures
+ */
+export const imageAnalytics = mysqlTable('imageAnalytics', {
+  id: int('id').autoincrement().primaryKey(),
+  problemId: int('problemId').notNull().references(() => problems.id, { onDelete: 'cascade' }),
+  userId: int('userId').references(() => users.id, { onDelete: 'set null' }),
+  imageUrl: text('imageUrl').notNull(),
+  
+  // Event tracking
+  eventType: mysqlEnum('eventType', ['load', 'error', 'retry', 'success', 'timeout']).notNull(),
+  status: mysqlEnum('status', ['pending', 'loading', 'success', 'failed']).notNull(),
+  
+  // Error details
+  errorCode: varchar('errorCode', { length: 50 }),
+  errorMessage: text('errorMessage'),
+  errorType: varchar('errorType', { length: 100 }), // 'cors', 'timeout', 'network', '404', 'server', 'unknown'
+  
+  // Retry information
+  retryAttempt: int('retryAttempt').default(0),
+  maxRetries: int('maxRetries').default(3),
+  
+  // Performance metrics
+  loadTime: int('loadTime'), // milliseconds
+  fileSize: int('fileSize'), // bytes
+  contentType: varchar('contentType', { length: 100 }),
+  
+  // Browser/Network context
+  userAgent: text('userAgent'),
+  networkType: varchar('networkType', { length: 50 }), // '4g', '3g', '2g', 'wifi', 'unknown'
+  bandwidth: int('bandwidth'), // estimated bandwidth in kbps
+  
+  // Request details
+  httpStatus: int('httpStatus'),
+  cacheControl: varchar('cacheControl', { length: 255 }),
+  
+  // Timestamps
+  requestedAt: timestamp('requestedAt').defaultNow().notNull(),
+  resolvedAt: timestamp('resolvedAt'),
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
+});
+
+export type ImageAnalytic = typeof imageAnalytics.$inferSelect;
+export type InsertImageAnalytic = typeof imageAnalytics.$inferInsert;

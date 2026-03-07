@@ -414,3 +414,14 @@
 - [x] Add CORS support with crossOrigin attribute
 - [x] Add lazy loading and async decoding
 - [x] Write and pass 13 image loading tests
+
+
+## Image Analytics Feature
+- [x] Design analytics schema and data model with 23 columns
+- [x] Create imageAnalytics table in database
+- [x] Implement backend analytics service with 6 major functions
+- [x] Add database migration (0006_conscious_morlun.sql)
+- [x] Write and pass 15 image analytics tests
+- [ ] Add client-side image event tracking
+- [ ] Create analytics dashboard UI
+- [ ] Add analytics API endpoints
