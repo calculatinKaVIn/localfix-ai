@@ -1,10 +1,13 @@
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
-import { publicProcedure, router } from "./_core/trpc";
+import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
+import { z } from "zod";
+import { generateReport, validateProblemDescription } from "./ai";
+import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem } from "./db";
+import { TRPCError } from "@trpc/server";
 
 export const appRouter = router({
-    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
@@ -17,12 +20,206 @@ export const appRouter = router({
     }),
   }),
 
-  // TODO: add feature routers here, e.g.
-  // todo: router({
-  //   list: protectedProcedure.query(({ ctx }) =>
-  //     db.getUserTodos(ctx.user.id)
-  //   ),
-  // }),
+  problems: router({
+    /**
+     * Submit a new problem and generate AI report
+     */
+    submit: protectedProcedure
+      .input(
+        z.object({
+          description: z.string().min(10).max(2000),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          // Validate input
+          const validation = validateProblemDescription(input.description);
+          if (!validation.valid) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: validation.error || "Invalid description",
+            });
+          }
+
+          // Generate AI report
+          const report = await generateReport(input.description);
+
+          // Create problem record
+          const problemResult = await createProblem({
+            userId: ctx.user.id,
+            title: report.subject,
+            description: input.description,
+            status: "submitted",
+          });
+
+          const problemId = (problemResult as any).insertId;
+
+          // Create report record
+          await createReport({
+            problemId,
+            classification: report.classification,
+            priority: report.priority,
+            department: report.department,
+            subject: report.subject,
+            description: report.description,
+            riskLevel: report.riskLevel,
+            affectedArea: report.affectedArea,
+            suggestedUrgency: report.suggestedUrgency,
+            impactScore: report.impactScore,
+          });
+
+          return {
+            problemId,
+            report,
+            success: true,
+          };
+        } catch (error) {
+          console.error("Error submitting problem:", error);
+          if (error instanceof TRPCError) throw error;
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to submit problem",
+          });
+        }
+      }),
+
+    /**
+     * Get user's own problems and reports
+     */
+    myProblems: protectedProcedure.query(async ({ ctx }) => {
+      try {
+        const problems = await getUserProblems(ctx.user.id);
+        return problems;
+      } catch (error) {
+        console.error("Error fetching user problems:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch problems",
+        });
+      }
+    }),
+
+    /**
+     * Get a specific problem with its report
+     */
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ ctx, input }) => {
+        try {
+          const result = await getProblemWithReport(input.id);
+          if (!result) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Problem not found",
+            });
+          }
+
+          // Check ownership
+          if (result.problem.userId !== ctx.user.id && ctx.user.role !== "admin") {
+            throw new TRPCError({
+              code: "FORBIDDEN",
+              message: "You don't have permission to view this problem",
+            });
+          }
+
+          return result;
+        } catch (error) {
+          if (error instanceof TRPCError) throw error;
+          console.error("Error fetching problem:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch problem",
+          });
+        }
+      }),
+  }),
+
+  admin: router({
+    /**
+     * Get all problems (admin only)
+     */
+    allProblems: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().min(1).max(100).default(50),
+          offset: z.number().min(0).default(0),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Admin access required",
+          });
+        }
+
+        try {
+          const result = await getAllProblems(input.limit, input.offset);
+          return result;
+        } catch (error) {
+          console.error("Error fetching all problems:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch problems",
+          });
+        }
+      }),
+
+    /**
+     * Update problem status (admin only)
+     */
+    updateStatus: protectedProcedure
+      .input(
+        z.object({
+          problemId: z.number(),
+          status: z.enum(["submitted", "in_progress", "resolved", "rejected"]),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Admin access required",
+          });
+        }
+
+        try {
+          await updateProblemStatus(input.problemId, input.status);
+          return { success: true };
+        } catch (error) {
+          console.error("Error updating problem status:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update problem status",
+          });
+        }
+      }),
+
+    /**
+     * Delete a problem (admin only)
+     */
+    deleteProblem: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Admin access required",
+          });
+        }
+
+        try {
+          await deleteProblem(input.problemId);
+          return { success: true };
+        } catch (error) {
+          console.error("Error deleting problem:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete problem",
+          });
+        }
+      }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

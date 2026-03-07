@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { count, desc, eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
+import { InsertUser, users, InsertReport, InsertProblem, problems, reports } from "../drizzle/schema";
 import { ENV } from './_core/env';
 
 let _db: ReturnType<typeof drizzle> | null = null;
@@ -89,4 +89,117 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+/**
+ * Get all problems with their reports for a specific user
+ */
+export async function getUserProblems(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      problem: problems,
+      report: reports,
+    })
+    .from(problems)
+    .leftJoin(reports, eq(reports.problemId, problems.id))
+    .where(eq(problems.userId, userId))
+    .orderBy(desc(problems.createdAt));
+
+  return result;
+}
+
+/**
+ * Get all problems with pagination (for admin dashboard)
+ */
+export async function getAllProblems(limit: number = 50, offset: number = 0) {
+  const db = await getDb();
+  if (!db) return { problems: [], total: 0 };
+
+  const result = await db
+    .select({
+      problem: problems,
+      report: reports,
+    })
+    .from(problems)
+    .leftJoin(reports, eq(reports.problemId, problems.id))
+    .orderBy(desc(problems.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  // Get total count
+  const countResult = await db.select({ count: count() }).from(problems);
+  const total = countResult[0]?.count || 0;
+
+  return { problems: result, total };
+}
+
+/**
+ * Get a single problem with its report
+ */
+export async function getProblemWithReport(problemId: number) {
+  const db = await getDb();
+  if (!db) return null;
+
+  const result = await db
+    .select({
+      problem: problems,
+      report: reports,
+    })
+    .from(problems)
+    .leftJoin(reports, eq(reports.problemId, problems.id))
+    .where(eq(problems.id, problemId))
+    .limit(1);
+
+  return result[0] || null;
+}
+
+/**
+ * Create a new problem
+ */
+export async function createProblem(data: InsertProblem) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(problems).values(data);
+  return result;
+}
+
+/**
+ * Create a new report for a problem
+ */
+export async function createReport(data: InsertReport) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db.insert(reports).values(data);
+  return result;
+}
+
+/**
+ * Update problem status
+ */
+export async function updateProblemStatus(problemId: number, status: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .update(problems)
+    .set({ status: status as any, updatedAt: new Date() })
+    .where(eq(problems.id, problemId));
+
+  return result;
+}
+
+/**
+ * Delete a problem and its associated report
+ */
+export async function deleteProblem(problemId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Reports will be deleted automatically due to cascade delete
+  const result = await db.delete(problems).where(eq(problems.id, problemId));
+  return result;
+}
+

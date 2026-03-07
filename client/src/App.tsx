@@ -5,12 +5,20 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
+import SubmitProblem from "./pages/SubmitProblem";
+import ProblemHistory from "./pages/ProblemHistory";
+import AdminDashboard from "./pages/AdminDashboard";
+import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
-  // make sure to consider if you need authentication for certain routes
+  const { user } = useAuth();
+
   return (
     <Switch>
       <Route path={"/"} component={Home} />
+      <Route path={"/submit"} component={SubmitProblem} />
+      <Route path={"/history"} component={ProblemHistory} />
+      {user?.role === "admin" && <Route path={"/admin"} component={AdminDashboard} />}
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />
