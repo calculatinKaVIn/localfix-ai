@@ -1,5 +1,6 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { MapView } from "@/components/Map";
+import { ImageLoader } from "@/components/ImageLoader";
 import { trpc } from "@/lib/trpc";
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
@@ -408,7 +409,18 @@ export default function CommunityMap() {
               {selectedProblem.problem.imageUrl && (
                 <div>
                   <p className="text-sm font-medium text-muted-foreground mb-2">Photo</p>
-                  <img src={selectedProblem.problem.imageUrl} alt="Problem" className="w-full rounded-lg" />
+                  <ImageLoader
+                    src={selectedProblem.problem.imageUrl}
+                    alt="Problem"
+                    className="w-full rounded-lg"
+                    fallbackText="Unable to load problem image. This may be due to network issues or image expiration."
+                    maxRetries={3}
+                  />
+                </div>
+              )}
+              {!selectedProblem.problem.imageUrl && (
+                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                  <p className="text-sm text-muted-foreground">No image attached to this report</p>
                 </div>
               )}
 

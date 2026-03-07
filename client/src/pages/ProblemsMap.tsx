@@ -37,18 +37,18 @@ export default function ProblemsMap() {
   });
 
   useEffect(() => {
-    if (allProblems?.problems) {
-      const processedMarkers = allProblems.problems
-        .filter((item) => {
+    if (allProblems && Array.isArray(allProblems)) {
+      const processedMarkers = allProblems
+        .filter((item: any) => {
           // Only include problems with location data
           return item.problem.latitude && item.problem.longitude;
         })
-        .filter((item) => {
+        .filter((item: any) => {
           // Apply status filter
           if (statusFilter === "all") return true;
           return item.problem.status === statusFilter;
         })
-        .map((item) => ({
+        .map((item: any) => ({
           id: item.problem.id,
           title: item.problem.title,
           latitude: parseFloat(item.problem.latitude!),

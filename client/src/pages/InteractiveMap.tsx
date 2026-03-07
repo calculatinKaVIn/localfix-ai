@@ -68,14 +68,14 @@ export default function InteractiveMap() {
 
   // Process problems into markers
   useEffect(() => {
-    if (allProblems?.problems) {
-      const processedMarkers = allProblems.problems
-        .filter((item) => item.problem.latitude && item.problem.longitude)
-        .filter((item) => {
+    if (allProblems && Array.isArray(allProblems)) {
+      const processedMarkers = allProblems
+        .filter((item: any) => item.problem.latitude && item.problem.longitude)
+        .filter((item: any) => {
           if (statusFilter === "all") return true;
           return item.problem.status === statusFilter;
         })
-        .map((item) => ({
+        .map((item: any) => ({
           id: item.problem.id,
           title: item.problem.title,
           latitude: parseFloat(item.problem.latitude!),

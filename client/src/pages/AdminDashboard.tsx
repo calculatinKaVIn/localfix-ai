@@ -141,8 +141,8 @@ export default function AdminDashboard() {
     );
   }
 
-  const totalProblems = allProblems?.total || 0;
-  const problems = allProblems?.problems || [];
+  const totalProblems = Array.isArray(allProblems) ? allProblems.length : 0;
+  const problems = Array.isArray(allProblems) ? allProblems : [];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background to-background/95 py-12 px-4">
@@ -164,19 +164,19 @@ export default function AdminDashboard() {
           <Card className="card-elegant p-6">
             <p className="text-sm text-muted-foreground mb-1">Submitted</p>
             <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-              {problems.filter((p) => p.problem.status === "submitted").length}
+              {problems.filter((p: any) => p.problem.status === "submitted").length}
             </p>
           </Card>
           <Card className="card-elegant p-6">
             <p className="text-sm text-muted-foreground mb-1">In Progress</p>
             <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
-              {problems.filter((p) => p.problem.status === "in_progress").length}
+              {problems.filter((p: any) => p.problem.status === "in_progress").length}
             </p>
           </Card>
           <Card className="card-elegant p-6">
             <p className="text-sm text-muted-foreground mb-1">Resolved</p>
             <p className="text-3xl font-bold text-green-600 dark:text-green-400">
-              {problems.filter((p) => p.problem.status === "resolved").length}
+              {problems.filter((p: any) => p.problem.status === "resolved").length}
             </p>
           </Card>
         </div>
@@ -205,7 +205,7 @@ export default function AdminDashboard() {
                     </td>
                   </tr>
                 ) : (
-                  problems.map((item) => (
+                  problems.map((item: any) => (
                     <tr key={item.problem.id} className="hover:bg-background/50 transition-colors">
                       <td className="px-6 py-4">
                         {item.problem.imageUrl ? (

@@ -250,3 +250,132 @@
 - [x] Improve error handling and logging in useWebSocket hook
 - [x] Fix WebSocket Server constructor import issue
 - [x] Test WebSocket connection with proper error recovery
+
+
+## 🧠 AI Analysis Features
+- [ ] Detect problem category (pothole, trash, streetlight, graffiti)
+- [ ] Estimate urgency level
+- [ ] Predict danger level for pedestrians
+- [ ] Suggest best city department to contact
+- [ ] Generate professional complaint message
+- [ ] Convert casual text to formal report language
+- [ ] Suggest temporary safety advice
+- [ ] Detect duplicate reports in same area
+- [ ] Summarize long reports
+- [ ] Translate report into multiple languages
+
+## 📍 Location Intelligence Features
+- [ ] Identify nearest city district
+- [ ] Suggest closest government office
+- [ ] Detect school zones near issue
+- [ ] Predict if problem is near hospital/emergency route
+- [ ] Estimate population affected
+- [ ] Determine if issue is on public vs private property
+- [ ] Suggest map coordinates
+- [ ] Suggest landmarks for easier reporting
+- [ ] Predict traffic impact
+- [ ] Detect if location is high accident area
+
+## 🛠 Smart Reporting Tools
+- [ ] Generate email report format
+- [ ] Generate tweet/social report for awareness
+- [ ] Generate phone script for calling city services
+- [ ] Auto-fill report forms
+- [ ] Suggest attachments needed
+- [ ] Generate short report version
+- [ ] Generate detailed engineering description
+- [ ] Suggest estimated repair type
+- [ ] Suggest repair priority ranking
+- [ ] Suggest maintenance category
+
+## 🚨 Safety Features
+- [ ] Predict injury risk level
+- [ ] Suggest temporary warning signs
+- [ ] Detect danger for cyclists
+- [ ] Detect danger for disabled pedestrians
+- [ ] Suggest temporary route changes
+- [ ] Warn about night visibility risks
+- [ ] Identify fire hazard risks
+- [ ] Identify flood risk
+- [ ] Predict vehicle damage risk
+- [ ] Identify public safety urgency
+
+## 🌍 Smart City Insights
+- [ ] Identify trend of similar problems nearby
+- [ ] Predict which areas need maintenance most
+- [ ] Suggest city improvement ideas
+- [ ] Rank neighborhoods by infrastructure issues
+- [ ] Detect repeated unresolved problems
+- [ ] Predict maintenance backlog
+- [ ] Suggest community volunteer solutions
+- [ ] Highlight frequent complaint types
+- [ ] Suggest urban planning improvements
+- [ ] Detect neglected areas needing attention
+
+## 📊 User Experience Features
+- [ ] Simplify complex reports
+- [ ] Generate friendly summary for users
+- [ ] Suggest next steps after reporting
+- [ ] Explain why issue matters
+- [ ] Show expected repair timeline estimate
+- [ ] Predict city response probability
+- [ ] Show similar reports solved recently
+- [ ] Recommend additional details to include
+- [ ] Generate impact explanation
+- [ ] Suggest photo angles to document issue
+
+## 🤖 AI Assistant Features
+- [ ] Chatbot to guide reporting
+- [ ] Ask follow-up questions about issue
+- [ ] Clarify vague reports
+- [ ] Detect incomplete reports
+- [ ] Suggest better wording
+- [ ] Offer step-by-step reporting help
+- [ ] Suggest category corrections
+- [ ] Explain which department handles issue
+- [ ] Provide legal or city rule references
+- [ ] Recommend community resources
+
+## 📷 Image Analysis Features
+- [ ] Detect pothole from photo
+- [ ] Detect broken streetlight from photo
+- [ ] Detect trash pile from photo
+- [ ] Estimate pothole size
+- [ ] Identify graffiti
+- [ ] Identify sidewalk cracks
+- [ ] Detect dangerous road damage
+- [ ] Identify blocked drains
+- [ ] Detect fallen trees
+- [ ] Identify construction hazards
+
+## 🌟 Unique Hackathon Features
+- [ ] Predict cost of repair
+- [ ] Estimate repair time needed
+- [ ] Predict which department will respond fastest
+- [ ] Generate before/after improvement suggestions
+- [ ] Suggest community voting on issues
+- [ ] Detect environmental impact
+- [ ] Identify accessibility issues for disabled users
+- [ ] Suggest temporary community fixes
+- [ ] Predict future infrastructure failures
+- [ ] Generate city improvement report summary
+
+## 🧩 Extra Demo Features
+- [ ] AI generates public awareness message
+- [ ] AI generates local news headline about issue
+- [ ] AI creates short social media campaign
+- [ ] AI explains issue to city officials clearly
+- [ ] AI generates repair priority score
+- [ ] AI explains why city should fix it quickly
+- [ ] AI suggests community petition text
+- [ ] AI estimates number of complaints needed for action
+- [ ] AI identifies similar problems in other cities
+- [ ] AI suggests long-term infrastructure solutions
+
+
+## Bug Fixes - Image Loading on Map
+- [x] Investigate image loading failures on community map
+- [x] Identify root cause of inconsistent image display (presigned URL expiration)
+- [x] Implement ImageLoader component with retry logic and error handling
+- [x] Integrate ImageLoader into CommunityMap and fix data structure issues
+- [x] Write and pass vitest tests for image loading functionality

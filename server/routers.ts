@@ -9,9 +9,11 @@ import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
 import { getAnalyticsOverview, detectPatterns } from "./analytics";
 import wsManager from "./websocket";
+import { aiAnalysisRouter } from "./routers/aiAnalysis";
 
 export const appRouter = router({
   system: systemRouter,
+  ai: aiAnalysisRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
