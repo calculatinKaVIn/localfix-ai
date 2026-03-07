@@ -222,3 +222,12 @@
 - [x] Add location capture in SubmitProblem when filing a report
 - [x] Display live location marker on map for newly filed reports
 - [x] Test geolocation on different browsers and devices
+
+
+## Bug Fixes - Google Maps Duplicate Load Error
+- [x] Identify root cause: Map.tsx created new script on every mount
+- [x] Create global script loader (mapsScriptLoader.ts) with state management
+- [x] Update Map.tsx to use global loader instead of local loadMapScript()
+- [x] Add error handling with try-catch in Map component
+- [x] Write and pass vitest tests verifying the fix
+- [x] Verify /profile page no longer throws duplicate API error
