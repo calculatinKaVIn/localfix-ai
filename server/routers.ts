@@ -10,10 +10,12 @@ import { uploadProblemImage, validateImageFile } from "./imageUpload";
 import { getAnalyticsOverview, detectPatterns } from "./analytics";
 import wsManager from "./websocket";
 import { aiAnalysisRouter } from "./routers/aiAnalysis";
+import { translationRouter } from "./routers/translation";
 
 export const appRouter = router({
   system: systemRouter,
   ai: aiAnalysisRouter,
+  translation: translationRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {

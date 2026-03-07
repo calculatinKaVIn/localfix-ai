@@ -147,3 +147,74 @@ export const imageAnalytics = mysqlTable('imageAnalytics', {
 
 export type ImageAnalytic = typeof imageAnalytics.$inferSelect;
 export type InsertImageAnalytic = typeof imageAnalytics.$inferInsert;
+
+
+/**
+ * Supported languages for multi-language reporting
+ */
+export const supportedLanguages = [
+  'en', // English
+  'es', // Spanish
+  'fr', // French
+  'de', // German
+  'it', // Italian
+  'pt', // Portuguese
+  'ru', // Russian
+  'zh', // Chinese
+  'ja', // Japanese
+  'ko', // Korean
+  'ar', // Arabic
+  'hi', // Hindi
+] as const;
+
+export type SupportedLanguage = (typeof supportedLanguages)[number];
+
+/**
+ * Problem Translations table - stores translated versions of problem reports
+ */
+export const problemTranslations = mysqlTable('problemTranslations', {
+  id: int('id').autoincrement().primaryKey(),
+  problemId: int('problemId').notNull().references(() => problems.id, { onDelete: 'cascade' }),
+  
+  // Original language
+  originalLanguage: varchar('originalLanguage', { length: 10 }).notNull(),
+  
+  // Translated content
+  language: varchar('language', { length: 10 }).notNull(),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  
+  // Translation metadata
+  translatedBy: varchar('translatedBy', { length: 50 }).default('ai').notNull(), // 'ai' or 'human'
+  confidence: int('confidence'), // 0-100 confidence score for AI translations
+  isApproved: int('isApproved').default(0),
+  approvedBy: int('approvedBy').references(() => users.id, { onDelete: 'set null' }),
+  
+  // Timestamps
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
+});
+
+export type ProblemTranslation = typeof problemTranslations.$inferSelect;
+export type InsertProblemTranslation = typeof problemTranslations.$inferInsert;
+
+/**
+ * Update problems table to include language field
+ */
+export const problemsWithLanguage = mysqlTable('problems_v2', {
+  id: int('id').autoincrement().primaryKey(),
+  userId: int('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  imageUrl: text('imageUrl'),
+  latitude: varchar('latitude', { length: 50 }),
+  longitude: varchar('longitude', { length: 50 }),
+  status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
+  
+  // Language fields
+  originalLanguage: varchar('originalLanguage', { length: 10 }).default('en').notNull(),
+  detectedLanguage: varchar('detectedLanguage', { length: 10 }),
+  
+  createdAt: timestamp('createdAt').defaultNow().notNull(),
+  updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
+});

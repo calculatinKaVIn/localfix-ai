@@ -425,3 +425,13 @@
 - [ ] Add client-side image event tracking
 - [ ] Create analytics dashboard UI
 - [ ] Add analytics API endpoints
+
+
+## Multi-Language Reporting Feature
+- [x] Design multi-language schema for storing translations (problemTranslations table)
+- [x] Implement AI translation service with language detection (12 languages supported)
+- [x] Add language field to problems table (originalLanguage, detectedLanguage)
+- [x] Create language selection UI components (LanguageSelector, LanguageDetectionBanner)
+- [x] Add translation API endpoints (6 tRPC procedures)
+- [x] Integrate translation router into main app router
+- [x] Write and pass 15 multi-language tests
