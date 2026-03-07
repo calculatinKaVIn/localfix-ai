@@ -4,7 +4,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router, protectedProcedure } from "./_core/trpc";
 import { z } from "zod";
 import { generateEnhancedReport, validateProblemDescription } from "./aiEnhanced";
-import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem } from "./db";
+import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem, getAllProblemsForMap } from "./db";
 import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
 import { getAnalyticsOverview, detectPatterns } from "./analytics";
@@ -278,6 +278,23 @@ export const appRouter = router({
           });
         }
        }),
+  }),
+
+  map: router({
+    /**
+     * Get all problems with location data for the community map (public)
+     */
+    allProblems: publicProcedure.query(async () => {
+      try {
+        return await getAllProblemsForMap();
+      } catch (error) {
+        console.error("Error fetching map problems:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch map data",
+        });
+      }
+    }),
   }),
 
   analytics: router({

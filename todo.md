@@ -180,3 +180,13 @@
 - [x] Implement pattern detection algorithms
 - [x] Add insights and recommendations generation
 - [ ] Create export functionality for analytics data
+
+
+## Live Community Map
+- [x] Backend: fetch all problems with location + full report data for map
+- [x] Frontend: live map page with status-colored markers for all users' problems
+- [x] Marker click: pop-up showing full report, submitter, date submitted
+- [x] Geolocation: auto-center map on user's current location
+- [x] Filter controls: filter markers by status and problem type
+- [x] Legend: color key for marker statuses
+- [x] Add/update map link in main navigation

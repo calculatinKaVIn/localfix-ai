@@ -30,8 +30,8 @@ export default function Home() {
                 <Button variant="ghost" onClick={() => setLocation("/history")}>
                   My Reports
                 </Button>
-                <Button variant="ghost" onClick={() => setLocation("/map")}>
-                  Map
+                <Button variant="ghost" onClick={() => setLocation("/community-map")}>
+                  Live Map
                 </Button>
                 <Button variant="ghost" onClick={() => setLocation("/profile")}>
                   Profile

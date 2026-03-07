@@ -12,6 +12,7 @@ import ProblemsMap from "./pages/ProblemsMap";
 import InteractiveMap from "./pages/InteractiveMap";
 import UserProfile from "./pages/UserProfile";
 import Analytics from "./pages/Analytics";
+import CommunityMap from "./pages/CommunityMap";
 import { useAuth } from "./_core/hooks/useAuth";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path={"/map"} component={ProblemsMap} />
       <Route path={"/interactive-map"} component={InteractiveMap} />
       <Route path={"/analytics"} component={Analytics} />
+      <Route path={"/community-map"} component={CommunityMap} />
       {user?.role === "admin" && <Route path={"/admin"} component={AdminDashboard} />}
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route */}

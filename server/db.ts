@@ -155,6 +155,27 @@ export async function getProblemWithReport(problemId: number) {
 }
 
 /**
+ * Get all problems with their reports and user info for the community map
+ */
+export async function getAllProblemsForMap() {
+  const db = await getDb();
+  if (!db) return [];
+
+  const result = await db
+    .select({
+      problem: problems,
+      report: reports,
+      userName: users.name,
+    })
+    .from(problems)
+    .leftJoin(reports, eq(reports.problemId, problems.id))
+    .leftJoin(users, eq(users.id, problems.userId))
+    .orderBy(desc(problems.createdAt));
+
+  return result;
+}
+
+/**
  * Create a new problem
  */
 export async function createProblem(data: InsertProblem) {
