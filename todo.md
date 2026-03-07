@@ -100,3 +100,15 @@
 - [x] Display images in problem history and admin dashboard
 - [x] Add image validation (file size, format)
 - [x] Create image gallery component for viewing problem photos
+
+
+## Map View Feature
+- [x] Add latitude and longitude columns to problems table
+- [x] Update database schema and run migrations
+- [x] Create map page component with Google Maps integration
+- [x] Implement problem markers with status-based colors
+- [ ] Add marker clustering for performance
+- [x] Create info windows showing problem details on marker click
+- [x] Add map filters by status and problem type
+- [ ] Implement geolocation for user's current location
+- [ ] Add problem submission from map location

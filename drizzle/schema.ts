@@ -62,6 +62,8 @@ export const problems = mysqlTable('problems', {
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
   imageUrl: text('imageUrl'),
+  latitude: varchar('latitude', { length: 50 }),
+  longitude: varchar('longitude', { length: 50 }),
   status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),
