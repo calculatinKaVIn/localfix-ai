@@ -7,6 +7,7 @@ import { generateEnhancedReport, validateProblemDescription } from "./aiEnhanced
 import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem } from "./db";
 import { TRPCError } from "@trpc/server";
 import { uploadProblemImage, validateImageFile } from "./imageUpload";
+import { getAnalyticsOverview, detectPatterns } from "./analytics";
 
 export const appRouter = router({
   system: systemRouter,
@@ -102,7 +103,7 @@ export const appRouter = router({
             longitude: input.longitude ? input.longitude.toString() : undefined,
           });
 
-          const problemId = (problemResult as any).insertId || (problemResult as any).id;
+          const problemId = problemResult.id;
 
           // Create report record with enhanced fields
           await createReport({
@@ -276,8 +277,39 @@ export const appRouter = router({
             message: "Failed to delete problem",
           });
         }
-      }),
+       }),
+  }),
+
+  analytics: router({
+    /**
+     * Get comprehensive analytics overview
+     */
+    overview: publicProcedure.query(async () => {
+      try {
+        return await getAnalyticsOverview();
+      } catch (error) {
+        console.error("Error fetching analytics overview:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to fetch analytics",
+        });
+      }
+    }),
+
+    /**
+     * Detect community issue patterns
+     */
+    patterns: publicProcedure.query(async () => {
+      try {
+        return await detectPatterns();
+      } catch (error) {
+        console.error("Error detecting patterns:", error);
+        throw new TRPCError({
+          code: "INTERNAL_SERVER_ERROR",
+          message: "Failed to detect patterns",
+        });
+      }
+    }),
   }),
 });
-
 export type AppRouter = typeof appRouter;

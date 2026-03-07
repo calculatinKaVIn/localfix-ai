@@ -166,3 +166,17 @@
 - [x] Fix duplicate entry error in reports table
 - [x] Verify database schema for reports table
 - [x] Test problem submission with and without location data
+
+
+## Analytics Dashboard
+- [x] Create analytics data models and backend procedures
+- [x] Build analytics dashboard UI with visualizations
+- [x] Implement problem type distribution charts
+- [x] Add priority level analytics
+- [ ] Create geographic heat maps for problem areas
+- [x] Implement time-series trends (submissions over time)
+- [x] Add department-wise problem distribution
+- [x] Create impact score analytics
+- [x] Implement pattern detection algorithms
+- [x] Add insights and recommendations generation
+- [ ] Create export functionality for analytics data

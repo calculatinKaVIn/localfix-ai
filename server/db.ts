@@ -161,10 +161,21 @@ export async function createProblem(data: InsertProblem) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  const result = await db.insert(problems).values(data);
+  await db.insert(problems).values(data);
   
-  // Return the result which contains insertId for MySQL
-  return result;
+  // Fetch the last inserted problem
+  const inserted = await db
+    .select()
+    .from(problems)
+    .where(eq(problems.userId, data.userId))
+    .orderBy((p) => p.id)
+    .limit(1);
+  
+  if (inserted.length === 0) {
+    throw new Error("Failed to retrieve inserted problem");
+  }
+  
+  return inserted[0];
 }
 
 /**

@@ -39,6 +39,9 @@ export default function Home() {
                 <Button variant="ghost" onClick={() => setLocation("/interactive-map")}>
                   Add Problem
                 </Button>
+                <Button variant="ghost" onClick={() => setLocation("/analytics")}>
+                  Analytics
+                </Button>
                 {user?.role === "admin" && (
                   <Button variant="ghost" onClick={() => setLocation("/admin")}>
                     Admin
