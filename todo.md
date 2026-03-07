@@ -395,3 +395,11 @@
 - [x] Prevent duplicate error handling in error and close events
 - [x] Reset reconnection attempts after max reached
 - [x] Test WebSocket stability with 12 passing tests
+
+
+## Bug Fixes - WebSocket Error on Profile Page
+- [x] Investigate WebSocket error on profile page
+- [x] Identified CommunityMap WebSocket initialization during component unmount
+- [x] Added isMounted flag to prevent callbacks on unmounted components
+- [x] Improved error suppression for unmounted component errors
+- [x] Verified error is resolved

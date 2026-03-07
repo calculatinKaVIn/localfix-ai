@@ -147,8 +147,12 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           }, delay);
         } else if (autoReconnect && reconnectAttemptsRef.current >= maxReconnectAttempts) {
           console.warn("[WebSocket] Max reconnection attempts reached, giving up");
-          const error = new Error("WebSocket: Max reconnection attempts reached");
-          onError?.(error);
+          // Only call onError if the component is still interested in updates
+          // This prevents errors from being reported for unmounted components
+          if (onError) {
+            const error = new Error("WebSocket: Max reconnection attempts reached");
+            onError(error);
+          }
           // Reset attempts after notifying error so user can manually reconnect
           reconnectAttemptsRef.current = 0;
         }
@@ -196,9 +200,15 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
 
   // Connect on mount, disconnect on unmount
   useEffect(() => {
-    connect();
+    // Only connect if component is still mounted
+    let isMounted = true;
+    
+    if (isMounted) {
+      connect();
+    }
 
     return () => {
+      isMounted = false;
       disconnect();
     };
   }, [connect, disconnect]);
