@@ -259,7 +259,7 @@ export default function CommunityMap() {
   return (
     <div className="flex flex-col h-screen bg-background">
       {/* Header */}
-      <div className="border-b border-border bg-white px-6 py-4 flex-shrink-0">
+      <div className="border-b border-border bg-background text-foreground px-6 py-4 flex-shrink-0 transition-colors duration-300">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
@@ -278,8 +278,8 @@ export default function CommunityMap() {
             {/* WebSocket Status */}
             <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium ${
               wsConnected 
-                ? "bg-green-100 text-green-700" 
-                : "bg-amber-100 text-amber-700"
+                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" 
+                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
             }`}>
               {wsConnected ? (
                 <>
@@ -306,8 +306,8 @@ export default function CommunityMap() {
                     isActive
                       ? f === "all"
                         ? "bg-primary text-white border-primary"
-                        : `${cfg!.bg} ${cfg!.color} ${cfg!.border}`
-                      : "bg-white text-muted-foreground border-border hover:border-primary/40"
+                        : `${cfg!.bg} ${cfg!.color} ${cfg!.border} dark:bg-opacity-20`
+                      : "bg-background text-muted-foreground border-border hover:border-primary/40 dark:bg-muted"
                   }`}
                 >
                   {f === "all" ? "All" : cfg!.label}
@@ -345,9 +345,9 @@ export default function CommunityMap() {
           )}
           {problemsWithLocation.length === 0 && !isLoading && (
             <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-none">
-              <div className="bg-white/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 text-center max-w-xs">
+              <div className="bg-background/90 dark:bg-card/90 backdrop-blur-sm rounded-2xl shadow-lg p-6 text-center max-w-xs border border-border">
                 <MapPin className="w-10 h-10 text-muted-foreground mx-auto mb-3" />
-                <p className="font-semibold text-foreground mb-1">No located problems yet</p>
+                <p className="font-semibold text-foreground mb-1 dark:text-foreground">No located problems yet</p>
                 <p className="text-sm text-muted-foreground">Problems submitted with a location will appear here as markers.</p>
               </div>
             </div>
@@ -362,9 +362,9 @@ export default function CommunityMap() {
 
         {/* Side Panel – full report */}
         {selectedProblem && (
-          <div className="w-[380px] flex-shrink-0 border-l border-border bg-white overflow-y-auto">
+          <div className="w-[380px] flex-shrink-0 border-l border-border bg-background text-foreground overflow-y-auto transition-colors duration-300">
             {/* Panel Header */}
-            <div className="sticky top-0 bg-white border-b border-border px-5 py-4 flex items-start justify-between z-10">
+            <div className="sticky top-0 bg-background border-b border-border px-5 py-4 flex items-start justify-between z-10 transition-colors duration-300">
               <div className="flex-1">
                 <h2 className="font-bold text-lg mb-1">{selectedProblem.problem.title}</h2>
                 <div className="flex gap-2 flex-wrap">
@@ -393,14 +393,14 @@ export default function CommunityMap() {
 
               {/* Metadata */}
               <div className="grid grid-cols-2 gap-3">
-                <div className="bg-background rounded p-3">
+                <div className="bg-muted/50 dark:bg-muted rounded p-3 transition-colors duration-300">
                   <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                     <Calendar className="w-3.5 h-3.5" /> Submitted
                   </p>
                   <p className="text-xs font-medium">{formatDate(selectedProblem.problem.createdAt)}</p>
                 </div>
                 {selectedProblem.report && (
-                  <div className="bg-background rounded p-3">
+                  <div className="bg-muted/50 dark:bg-muted rounded p-3 transition-colors duration-300">
                     <p className="text-xs text-muted-foreground mb-1 flex items-center gap-1">
                       <TrendingUp className="w-3.5 h-3.5" /> Impact Score
                     </p>
@@ -432,7 +432,7 @@ export default function CommunityMap() {
                 </div>
               )}
               {!selectedProblem.problem.imageUrl && (
-                <div className="bg-gray-50 rounded-lg p-4 text-center">
+                <div className="bg-muted/50 dark:bg-muted rounded-lg p-4 text-center transition-colors duration-300">
                   <p className="text-sm text-muted-foreground">No image attached to this report</p>
                 </div>
               )}

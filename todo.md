@@ -495,3 +495,23 @@
 - [x] Add hover effects to navigation links
 - [x] Add smooth transitions to mobile menu
 - [x] Test theme toggle updates navbar appearance
+
+
+## Dropdown Menu Animations
+- [ ] Create reusable dropdown menu component with animation support
+- [ ] Add user profile dropdown menu to navbar
+- [ ] Add fade-in and slide-down CSS animations
+- [ ] Implement click-outside detection to close dropdowns
+- [ ] Add keyboard navigation (Escape to close)
+- [ ] Add smooth transitions between menu states
+- [ ] Test dropdown animations on desktop and mobile
+- [ ] Verify dropdown positioning and overflow handling
+
+
+## Bug Fix - Dark Mode Compatibility
+- [x] Fix Live Map background colors in dark mode
+- [x] Fix Live Map text visibility in dark mode
+- [x] Fix Analytics Community Insights background in dark mode
+- [x] Fix Analytics charts text colors in dark mode
+- [x] Ensure all overlays and modals work in dark mode
+- [x] Test dark mode on all pages

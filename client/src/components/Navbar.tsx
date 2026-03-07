@@ -2,9 +2,10 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-import { MapPin, LogOut, Menu, X } from "lucide-react";
+import { MapPin, LogOut, Menu, X, User, Settings, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
+import { DropdownMenu, DropdownItem, DropdownDivider } from "./DropdownMenu";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -81,21 +82,52 @@ export default function Navbar() {
           </div>
           {isAuthenticated ? (
             <>
-              {/* Desktop User Info */}
-              <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-border transition-all duration-300">
-                <div className="text-right transition-all duration-300 hover:opacity-80">
-                  <p className="text-sm font-medium">{user?.name}</p>
-                  <p className="text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleLogout}
-                  className="gap-2 transition-all duration-300 hover:shadow-md hover:translate-y-[-2px] active:scale-95"
+              {/* Desktop User Dropdown */}
+              <div className="hidden sm:block">
+                <DropdownMenu
+                  align="right"
+                  trigger={
+                    <div className="flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted transition-all duration-300 cursor-pointer">
+                      <div className="text-right">
+                        <p className="text-sm font-medium">{user?.name}</p>
+                        <p className="text-xs text-muted-foreground">{user?.email}</p>
+                      </div>
+                      <ChevronDown className="w-4 h-4 transition-transform duration-300" />
+                    </div>
+                  }
                 >
-                  <LogOut className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
-                  Logout
-                </Button>
+                  <DropdownItem
+                    icon={<User className="w-4 h-4" />}
+                    onClick={() => handleNavClick("/profile")}
+                  >
+                    View Profile
+                  </DropdownItem>
+                  <DropdownItem
+                    icon={<Settings className="w-4 h-4" />}
+                    onClick={() => handleNavClick("/settings")}
+                  >
+                    Settings
+                  </DropdownItem>
+                  {user?.role === "admin" && (
+                    <>
+                      <DropdownDivider />
+                      <DropdownItem
+                        icon={<span className="text-lg">⚙️</span>}
+                        onClick={() => handleNavClick("/admin")}
+                      >
+                        Admin Dashboard
+                      </DropdownItem>
+                    </>
+                  )}
+                  <DropdownDivider />
+                  <DropdownItem
+                    icon={<LogOut className="w-4 h-4" />}
+                    onClick={handleLogout}
+                    isDestructive
+                  >
+                    Logout
+                  </DropdownItem>
+                </DropdownMenu>
               </div>
 
               {/* Mobile Logout Button */}
@@ -157,6 +189,12 @@ export default function Navbar() {
                 <p className="font-medium">{user?.name}</p>
                 <p className="text-xs text-muted-foreground">{user?.email}</p>
               </div>
+              <button
+                onClick={() => handleNavClick("/profile")}
+                className="w-full text-left px-4 py-2 rounded-lg hover:bg-muted transition-all duration-300 text-sm font-medium hover:translate-x-1 active:scale-95 animate-slide-in-up"
+              >
+                View Profile
+              </button>
               <button
                 onClick={handleLogout}
                 className="w-full text-left px-4 py-2 rounded-lg hover:bg-red-100 dark:hover:bg-red-900/20 transition-all duration-300 text-sm font-medium text-red-600 hover:translate-x-1 active:scale-95 animate-slide-in-up"

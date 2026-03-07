@@ -371,3 +371,34 @@
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
 }
+
+
+/* Dropdown menu slide-down animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-down {
+  animation: slideDown 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Dropdown menu fade-in animation */
+@keyframes fadeInDropdown {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-dropdown {
+  animation: fadeInDropdown 0.15s ease-in-out;
+}

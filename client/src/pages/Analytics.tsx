@@ -104,22 +104,22 @@ export default function Analytics() {
   const getSeverityColor = (severity: "low" | "medium" | "high") => {
     switch (severity) {
       case "low":
-        return "bg-blue-50 border-blue-200";
+        return "bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-700";
       case "medium":
-        return "bg-yellow-50 border-yellow-200";
+        return "bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-700";
       case "high":
-        return "bg-red-50 border-red-200";
+        return "bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-700";
     }
   };
 
   const getSeverityBadgeColor = (severity: "low" | "medium" | "high") => {
     switch (severity) {
       case "low":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300";
       case "medium":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300";
       case "high":
-        return "bg-red-100 text-red-800";
+        return "bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300";
     }
   };
 
