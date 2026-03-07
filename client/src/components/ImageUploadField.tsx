@@ -1,8 +1,9 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Upload, X, Loader2, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
+import { trpc } from "@/lib/trpc";
 
 function fileToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -25,8 +26,22 @@ interface ImageUploadFieldProps {
 
 export default function ImageUploadField({ onImageUpload, isLoading }: ImageUploadFieldProps) {
   const [preview, setPreview] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Use tRPC mutation for image upload
+  const uploadImageMutation = trpc.problems.uploadImage.useMutation({
+    onSuccess: (data) => {
+      setUploadedUrl(data.imageUrl);
+      onImageUpload(data.imageUrl);
+      toast.success("Image uploaded successfully!");
+    },
+    onError: (error) => {
+      console.error("Upload error:", error);
+      toast.error(error.message || "Failed to upload image");
+      setPreview(null);
+    },
+  });
 
   const handleFileSelect = async (file: File) => {
     // Validate file type
@@ -48,37 +63,17 @@ export default function ImageUploadField({ onImageUpload, isLoading }: ImageUplo
     };
     reader.readAsDataURL(file);
 
-    // Upload file
-    setUploading(true);
+    // Upload file using tRPC
     try {
       const base64 = await fileToBase64(file);
-      const response = await fetch("/api/trpc/problems.uploadImage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          imageData: base64,
-          mimetype: file.type,
-          size: file.size,
-        }),
+      await uploadImageMutation.mutateAsync({
+        imageData: base64,
+        mimetype: file.type,
+        size: file.size,
       });
-
-      if (!response.ok) {
-        throw new Error("Upload failed");
-      }
-
-      const data = await response.json();
-      if (data.result?.data?.imageUrl) {
-        onImageUpload(data.result.data.imageUrl);
-        toast.success("Image uploaded successfully");
-      }
     } catch (error) {
       console.error("Error uploading image:", error);
-      toast.error("Failed to upload image");
       setPreview(null);
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -110,17 +105,18 @@ export default function ImageUploadField({ onImageUpload, isLoading }: ImageUplo
 
   const clearPreview = () => {
     setPreview(null);
+    setUploadedUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
   };
 
-  if (preview) {
+  if (preview && uploadedUrl) {
     return (
       <div className="space-y-3">
-        <label className="block text-sm font-semibold">Problem Image</label>
-        <Card className="card-elegant p-4 relative overflow-hidden">
-          <div className="relative w-full h-48 bg-background rounded-lg overflow-hidden">
+        <label className="block text-sm font-semibold text-foreground">Problem Image</label>
+        <Card className="card-elegant p-4 relative overflow-hidden border border-green-200 bg-green-50/50">
+          <div className="relative w-full h-48 bg-background rounded-lg overflow-hidden shadow-sm">
             <img
               src={preview}
               alt="Problem preview"
@@ -129,13 +125,48 @@ export default function ImageUploadField({ onImageUpload, isLoading }: ImageUplo
             {!isLoading && (
               <button
                 onClick={clearPreview}
-                className="absolute top-2 right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90 transition-colors"
+                className="absolute top-2 right-2 bg-white/90 text-destructive rounded-full p-1.5 hover:bg-white transition-all shadow-md hover:shadow-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            <div className="absolute bottom-2 left-2 flex items-center gap-2 bg-white/90 px-3 py-1.5 rounded-full shadow-md">
+              <CheckCircle2 className="w-4 h-4 text-green-600" />
+              <span className="text-xs font-medium text-green-700">Uploaded</span>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
+  if (preview) {
+    return (
+      <div className="space-y-3">
+        <label className="block text-sm font-semibold text-foreground">Problem Image</label>
+        <Card className="card-elegant p-4 relative overflow-hidden border border-amber-200 bg-amber-50/50">
+          <div className="relative w-full h-48 bg-background rounded-lg overflow-hidden shadow-sm">
+            <img
+              src={preview}
+              alt="Problem preview"
+              className="w-full h-full object-cover"
+            />
+            {uploadImageMutation.isPending ? (
+              <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                  <span className="text-white text-sm font-medium">Uploading...</span>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={clearPreview}
+                className="absolute top-2 right-2 bg-white/90 text-destructive rounded-full p-1.5 hover:bg-white transition-all shadow-md hover:shadow-lg"
               >
                 <X className="w-4 h-4" />
               </button>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2">Image uploaded successfully</p>
         </Card>
       </div>
     );
@@ -143,35 +174,36 @@ export default function ImageUploadField({ onImageUpload, isLoading }: ImageUplo
 
   return (
     <div className="space-y-3">
-      <label className="block text-sm font-semibold">Problem Image (Optional)</label>
+      <label className="block text-sm font-semibold text-foreground">Problem Image (Optional)</label>
       <input
         ref={fileInputRef}
         type="file"
         accept="image/*"
         onChange={handleInputChange}
         className="hidden"
-        disabled={uploading || isLoading}
+        disabled={uploadImageMutation.isPending || isLoading}
       />
 
       <Card
-        className="card-elegant p-8 border-2 border-dashed border-border cursor-pointer transition-all hover:border-primary/50 hover:bg-primary/5"
+        className="card-elegant p-8 border-2 border-dashed border-border cursor-pointer transition-all hover:border-primary/60 hover:bg-primary/5 active:border-primary active:bg-primary/10"
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onClick={() => !uploadImageMutation.isPending && fileInputRef.current?.click()}
       >
         <div className="flex flex-col items-center justify-center text-center">
-          {uploading ? (
+          {uploadImageMutation.isPending ? (
             <>
               <Loader2 className="w-12 h-12 text-primary animate-spin mb-3" />
-              <p className="font-medium">Uploading image...</p>
+              <p className="font-semibold text-foreground">Uploading image...</p>
+              <p className="text-xs text-muted-foreground mt-1">Please wait</p>
             </>
           ) : (
             <>
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3">
+              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-3 transition-colors group-hover:bg-primary/20">
                 <Upload className="w-6 h-6 text-primary" />
               </div>
-              <p className="font-medium mb-1">Click to upload or drag and drop</p>
+              <p className="font-semibold text-foreground mb-1">Click to upload or drag and drop</p>
               <p className="text-sm text-muted-foreground">
                 PNG, JPG, WebP, GIF (Max 5MB)
               </p>

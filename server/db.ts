@@ -161,14 +161,28 @@ export async function createProblem(data: InsertProblem) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
-  await db.insert(problems).values(data);
+  const result: any = await db.insert(problems).values(data);
   
-  // Fetch the last inserted problem
+  // Extract the inserted ID from the result
+  // MySQL2 returns insertId in the result array
+  let insertId: number | null = null;
+  
+  if (result && Array.isArray(result) && result.length > 0) {
+    insertId = result[0]?.insertId ?? result[0]?.id;
+  } else if (result?.insertId) {
+    insertId = result.insertId;
+  }
+  
+  if (!insertId) {
+    console.error("Insert result:", result);
+    throw new Error("Failed to get inserted problem ID");
+  }
+  
+  // Fetch the newly inserted problem by ID
   const inserted = await db
     .select()
     .from(problems)
-    .where(eq(problems.userId, data.userId))
-    .orderBy((p) => p.id)
+    .where(eq(problems.id, insertId))
     .limit(1);
   
   if (inserted.length === 0) {
