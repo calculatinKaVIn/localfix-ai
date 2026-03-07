@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, MapPin, TrendingUp, Clock, AlertCircle } from "lucide-react";
 import { format } from "date-fns";
+import ImageGallery from "@/components/ImageGallery";
 
 type StatusType = "submitted" | "in_progress" | "resolved" | "rejected";
 
@@ -177,6 +178,14 @@ export default function ProblemHistory() {
                     </div>
                   </div>
                 </Card>
+
+                {/* Problem Image */}
+                {selectedProblem.problem.imageUrl && (
+                  <ImageGallery
+                    images={[selectedProblem.problem.imageUrl]}
+                    title="Problem Photo"
+                  />
+                )}
 
                 {/* AI Generated Report */}
                 {selectedProblem.report && (

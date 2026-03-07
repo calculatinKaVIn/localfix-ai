@@ -13,6 +13,7 @@ import {
 import { Loader2, AlertCircle, Trash2, CheckCircle, Clock, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import ImageGallery from "@/components/ImageGallery";
 
 type StatusType = "submitted" | "in_progress" | "resolved" | "rejected";
 
@@ -186,6 +187,7 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead className="bg-background border-b border-border">
                 <tr>
+                  <th className="px-6 py-3 text-left text-sm font-semibold">Image</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Problem</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Type</th>
                   <th className="px-6 py-3 text-left text-sm font-semibold">Priority</th>
@@ -198,13 +200,26 @@ export default function AdminDashboard() {
               <tbody className="divide-y divide-border">
                 {problems.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
+                    <td colSpan={8} className="px-6 py-8 text-center text-muted-foreground">
                       No problems found
                     </td>
                   </tr>
                 ) : (
                   problems.map((item) => (
                     <tr key={item.problem.id} className="hover:bg-background/50 transition-colors">
+                      <td className="px-6 py-4">
+                        {item.problem.imageUrl ? (
+                          <img
+                            src={item.problem.imageUrl}
+                            alt="Problem thumbnail"
+                            className="w-12 h-12 rounded-lg object-cover cursor-pointer hover:opacity-80 transition-opacity"
+                          />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-background flex items-center justify-center text-xs text-muted-foreground">
+                            No image
+                          </div>
+                        )}
+                      </td>
                       <td className="px-6 py-4">
                         <div className="max-w-xs">
                           <p className="font-medium line-clamp-1">{item.problem.title}</p>

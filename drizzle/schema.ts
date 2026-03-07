@@ -61,6 +61,7 @@ export const problems = mysqlTable('problems', {
   userId: int('userId').notNull().references(() => users.id, { onDelete: 'cascade' }),
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description').notNull(),
+  imageUrl: text('imageUrl'),
   status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
   updatedAt: timestamp('updatedAt').defaultNow().onUpdateNow().notNull(),

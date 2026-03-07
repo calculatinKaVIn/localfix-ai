@@ -89,3 +89,14 @@
 - [ ] Add accessibility features (ARIA labels, keyboard navigation)
 - [ ] Create checkpoint for deployment
 - [ ] Deploy to production
+
+
+## Image Upload Feature
+- [x] Add image_url column to problems table
+- [x] Update database schema and run migrations
+- [x] Create image upload handler in backend
+- [x] Implement S3 storage integration for images
+- [x] Add image preview in problem submission form
+- [x] Display images in problem history and admin dashboard
+- [x] Add image validation (file size, format)
+- [x] Create image gallery component for viewing problem photos

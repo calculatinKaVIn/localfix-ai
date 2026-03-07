@@ -6,6 +6,7 @@ import { z } from "zod";
 import { generateReport, validateProblemDescription } from "./ai";
 import { createProblem, createReport, getUserProblems, getAllProblems, getProblemWithReport, updateProblemStatus, deleteProblem } from "./db";
 import { TRPCError } from "@trpc/server";
+import { uploadProblemImage, validateImageFile } from "./imageUpload";
 
 export const appRouter = router({
   system: systemRouter,
@@ -24,10 +25,54 @@ export const appRouter = router({
     /**
      * Submit a new problem and generate AI report
      */
+    /**
+     * Upload image for a problem
+     */
+    uploadImage: protectedProcedure
+      .input(
+        z.object({
+          imageData: z.string(),
+          mimetype: z.string(),
+          size: z.number(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const validation = validateImageFile({
+            data: input.imageData,
+            mimetype: input.mimetype,
+            size: input.size,
+          });
+
+          if (!validation.valid) {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: validation.error || "Invalid image",
+            });
+          }
+
+          const imageUrl = await uploadProblemImage(
+            ctx.user.id,
+            input.imageData,
+            input.mimetype
+          );
+
+          return { imageUrl, success: true };
+        } catch (error) {
+          console.error("Error uploading image:", error);
+          if (error instanceof TRPCError) throw error;
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to upload image",
+          });
+        }
+      }),
+
     submit: protectedProcedure
       .input(
         z.object({
           description: z.string().min(10).max(2000),
+          imageUrl: z.string().optional(),
         })
       )
       .mutation(async ({ ctx, input }) => {
@@ -49,6 +94,7 @@ export const appRouter = router({
             userId: ctx.user.id,
             title: report.subject,
             description: input.description,
+            imageUrl: input.imageUrl,
             status: "submitted",
           });
 

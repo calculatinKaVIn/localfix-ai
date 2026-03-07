@@ -5,6 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { Loader2, CheckCircle, AlertCircle, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import ImageUploadField from "@/components/ImageUploadField";
 
 interface GeneratedReport {
   classification: string;
@@ -20,6 +21,7 @@ interface GeneratedReport {
 
 export default function SubmitProblem() {
   const [description, setDescription] = useState("");
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [generatedReport, setGeneratedReport] = useState<GeneratedReport | null>(null);
   const [problemId, setProblemId] = useState<number | null>(null);
@@ -44,11 +46,13 @@ export default function SubmitProblem() {
     try {
       const result = await submitMutation.mutateAsync({
         description: description.trim(),
+        imageUrl: imageUrl || undefined,
       });
 
       setGeneratedReport(result.report);
       setProblemId(result.problemId);
       setDescription("");
+      setImageUrl(null);
       toast.success("Problem submitted successfully!");
     } catch (error) {
       console.error("Error submitting problem:", error);
@@ -206,7 +210,7 @@ export default function SubmitProblem() {
         <div className="mb-12 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-4">Report a City Problem</h1>
           <p className="text-xl text-muted-foreground">
-            Describe the issue you've found in your community. Our AI will analyze it and prepare a professional report.
+            Describe the issue you've found in your community. Upload a photo to help city staff understand the problem better. Our AI will analyze it and prepare a professional report.
           </p>
         </div>
 
@@ -231,13 +235,19 @@ export default function SubmitProblem() {
               </p>
             </div>
 
+            {/* Image Upload */}
+            <ImageUploadField
+              onImageUpload={setImageUrl}
+              isLoading={isLoading}
+            />
+
             {/* Info Box */}
             <div className="bg-secondary/10 border border-secondary/20 rounded-lg p-4 flex gap-3">
               <AlertCircle className="w-5 h-5 text-secondary flex-shrink-0 mt-0.5" />
               <div className="text-sm">
                 <p className="font-semibold text-secondary mb-1">AI-Powered Analysis</p>
                 <p className="text-foreground/80">
-                  Our AI will automatically classify the problem, assign a priority level, suggest the appropriate city department, and calculate an impact score.
+                  Our AI will automatically classify the problem, assign a priority level, suggest the appropriate city department, and calculate an impact score based on your description and photo.
                 </p>
               </div>
             </div>
@@ -272,10 +282,10 @@ export default function SubmitProblem() {
           </div>
           <div className="text-center">
             <div className="w-12 h-12 bg-secondary/10 rounded-lg flex items-center justify-center mx-auto mb-3">
-              <span className="text-2xl">📋</span>
+              <span className="text-2xl">📸</span>
             </div>
-            <h3 className="font-semibold mb-2">Professional Reports</h3>
-            <p className="text-sm text-muted-foreground">Ready-to-submit reports for city departments</p>
+            <h3 className="font-semibold mb-2">Photo Documentation</h3>
+            <p className="text-sm text-muted-foreground">Attach images to provide visual evidence</p>
           </div>
           <div className="text-center">
             <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-3">
