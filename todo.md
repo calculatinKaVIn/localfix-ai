@@ -159,3 +159,10 @@
 - [x] Add map search functionality by address
 - [ ] Implement problem clustering for performance
 - [x] Add real-time incident updates on map
+
+
+## Bug Fixes
+- [x] Fix problem submission error - "Failed to submit problem"
+- [x] Fix duplicate entry error in reports table
+- [x] Verify database schema for reports table
+- [x] Test problem submission with and without location data
