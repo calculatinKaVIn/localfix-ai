@@ -41,6 +41,11 @@ export function ImageLoader({
     setIsLoading(true);
     setHasError(false);
     setRetryCount(0);
+    
+    // Add crossOrigin attribute for CORS support
+    if (imgRef.current) {
+      imgRef.current.crossOrigin = "anonymous";
+    }
   }, [src]);
 
   const handleImageLoad = () => {
@@ -56,9 +61,11 @@ export function ImageLoader({
       const delay = Math.pow(2, retryCount) * 500; // 500ms, 1s, 2s, 4s
       retryTimeoutRef.current = setTimeout(() => {
         setRetryCount((prev) => prev + 1);
-        // Force reload by updating src
-        if (imgRef.current) {
-          imgRef.current.src = `${src}?retry=${retryCount + 1}`;
+        // Force reload by updating src with cache-busting timestamp
+        if (imgRef.current && src) {
+          const separator = src.includes('?') ? '&' : '?';
+          const cacheBustUrl = `${src}${separator}_t=${Date.now()}&_attempt=${retryCount + 1}`;
+          imgRef.current.src = cacheBustUrl;
         }
       }, delay);
     } else {
@@ -118,6 +125,9 @@ export function ImageLoader({
         className={className}
         onLoad={handleImageLoad}
         onError={handleImageError}
+        crossOrigin="anonymous"
+        loading="lazy"
+        decoding="async"
         style={{ opacity: isLoading ? 0 : 1, transition: "opacity 0.3s ease-in-out" }}
       />
     </div>

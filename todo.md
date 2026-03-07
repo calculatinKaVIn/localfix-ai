@@ -403,3 +403,14 @@
 - [x] Added isMounted flag to prevent callbacks on unmounted components
 - [x] Improved error suppression for unmounted component errors
 - [x] Verified error is resolved
+
+
+## Bug Investigation - Image Loading on Live Map
+- [x] Deep analysis of image rendering pipeline
+- [x] Check S3 storage and URL generation (CloudFront CDN)
+- [x] Analyze browser network logs
+- [x] Identify root cause (CORS, cache-busting, presigned URLs)
+- [x] Implement comprehensive fix with cache-busting timestamps
+- [x] Add CORS support with crossOrigin attribute
+- [x] Add lazy loading and async decoding
+- [x] Write and pass 13 image loading tests
