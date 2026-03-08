@@ -2,22 +2,24 @@ import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
-import { MapPin, LogOut, Menu, X, User, Settings, ChevronDown } from "lucide-react";
+import { MapPin, LogOut, Menu, X, User, Settings, ChevronDown, Bell } from "lucide-react";
 import { useState } from "react";
 import ThemeToggle from "./ThemeToggle";
 import { DropdownMenu, DropdownItem, DropdownDivider } from "./DropdownMenu";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 export default function Navbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const [, setLocation] = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { counts } = useNotifications();
 
   const navItems = [
-    { label: "Report Problem", path: "/submit" },
-    { label: "My Reports", path: "/history" },
-    { label: "Live Map", path: "/community-map" },
-    { label: "Profile", path: "/profile" },
-    { label: "Analytics", path: "/analytics" },
+    { label: "Report Problem", path: "/submit", badge: counts.newReports },
+    { label: "My Reports", path: "/history", badge: counts.myReports },
+    { label: "Live Map", path: "/community-map", badge: 0 },
+    { label: "Profile", path: "/profile", badge: 0 },
+    { label: "Analytics", path: "/analytics", badge: counts.analytics },
   ];
 
   const handleNavClick = (path: string) => {
@@ -29,6 +31,15 @@ export default function Navbar() {
     await logout();
     setLocation("/");
     setMobileMenuOpen(false);
+  };
+
+  const renderBadge = (count: number) => {
+    if (!count || count <= 0) return null;
+    return (
+      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse">
+        {count > 99 ? "99+" : count}
+      </span>
+    );
   };
 
   return (
@@ -50,16 +61,18 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               {navItems.map((item, idx) => (
-                <Button
-                  key={item.path}
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleNavClick(item.path)}
-                  className="text-sm transition-all duration-300 hover:bg-muted hover:translate-y-[-2px] active:scale-95 relative overflow-hidden group"
-                >
-                  <span className="relative z-10">{item.label}</span>
-                  <span className="absolute inset-0 bg-primary/5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
-                </Button>
+                <div key={item.path} className="relative">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleNavClick(item.path)}
+                    className="text-sm transition-all duration-300 hover:bg-muted hover:translate-y-[-2px] active:scale-95 relative overflow-hidden group"
+                  >
+                    <span className="relative z-10">{item.label}</span>
+                    <span className="absolute inset-0 bg-primary/5 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-300 origin-left" />
+                  </Button>
+                  {renderBadge(item.badge)}
+                </div>
               ))}
               {user?.role === "admin" && (
                 <Button
@@ -77,6 +90,18 @@ export default function Navbar() {
 
         {/* Right Side - User Menu & Auth */}
         <div className="flex items-center gap-2">
+          {isAuthenticated && (
+            <div className="relative transition-all duration-300 hover:scale-110">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="relative"
+              >
+                <Bell className="w-5 h-5" />
+              </Button>
+              {renderBadge(counts.newReports + counts.myReports)}
+            </div>
+          )}
           <div className="transition-all duration-300 hover:scale-110">
             <ThemeToggle />
           </div>
@@ -167,14 +192,16 @@ export default function Navbar() {
         <div className="md:hidden border-t border-border bg-background animate-slide-in-up">
           <div className="container max-w-7xl mx-auto px-4 py-3 space-y-2">
             {navItems.map((item, idx) => (
-              <button
-                key={item.path}
-                onClick={() => handleNavClick(item.path)}
-                className="w-full text-left px-4 py-2 rounded-lg hover:bg-muted transition-all duration-300 text-sm font-medium hover:translate-x-1 active:scale-95 animate-slide-in-up"
-                style={{ animationDelay: `${idx * 0.05}s` }}
-              >
-                {item.label}
-              </button>
+              <div key={item.path} className="relative">
+                <button
+                  onClick={() => handleNavClick(item.path)}
+                  className="w-full text-left px-4 py-2 rounded-lg hover:bg-muted transition-all duration-300 text-sm font-medium hover:translate-x-1 active:scale-95 animate-slide-in-up"
+                  style={{ animationDelay: `${idx * 0.05}s` }}
+                >
+                  {item.label}
+                </button>
+                {renderBadge(item.badge)}
+              </div>
             ))}
             {user?.role === "admin" && (
               <button

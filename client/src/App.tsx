@@ -5,6 +5,7 @@ import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { GeolocationProvider } from "./contexts/GeolocationContext";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import SubmitProblem from "./pages/SubmitProblem";
@@ -50,13 +51,15 @@ function App() {
         defaultTheme="light"
         switchable
       >
-        <GeolocationProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Navbar />
-            <Router />
-          </TooltipProvider>
-        </GeolocationProvider>
+        <NotificationProvider>
+          <GeolocationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Navbar />
+              <Router />
+            </TooltipProvider>
+          </GeolocationProvider>
+        </NotificationProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );
