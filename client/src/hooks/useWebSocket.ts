@@ -125,8 +125,8 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           }
         }
         console.error("[WebSocket] Error:", errorMessage);
-        // Don't call onError here - let onclose handle reconnection
-        // This prevents duplicate error handling
+        // Note: We don't call onError here to avoid duplicate error handling.
+        // The onclose handler will manage reconnection attempts.
       };
 
       ws.onclose = () => {
@@ -147,13 +147,9 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
           }, delay);
         } else if (autoReconnect && reconnectAttemptsRef.current >= maxReconnectAttempts) {
           console.warn("[WebSocket] Max reconnection attempts reached, giving up");
-          // Only call onError if the component is still interested in updates
-          // This prevents errors from being reported for unmounted components
-          if (onError) {
-            const error = new Error("WebSocket: Max reconnection attempts reached");
-            onError(error);
-          }
-          // Reset attempts after notifying error so user can manually reconnect
+          // Don't call onError repeatedly - only log the warning
+          // This prevents spamming the error handler
+          // Reset attempts so user can manually reconnect if needed
           reconnectAttemptsRef.current = 0;
         }
       };
@@ -203,12 +199,18 @@ export function useWebSocket(options: UseWebSocketOptions = {}) {
     // Only connect if component is still mounted
     let isMounted = true;
     
-    if (isMounted) {
-      connect();
-    }
+    const connectIfMounted = () => {
+      if (isMounted) {
+        connect();
+      }
+    };
+
+    // Small delay to ensure component is fully mounted
+    const timer = setTimeout(connectIfMounted, 0);
 
     return () => {
       isMounted = false;
+      clearTimeout(timer);
       disconnect();
     };
   }, [connect, disconnect]);

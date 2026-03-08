@@ -75,7 +75,11 @@ export function useNotificationWebSocket(options: UseNotificationWebSocketOption
       console.log('[NotificationWebSocket] Disconnected from real-time updates');
     },
     onError: (error) => {
-      console.error('[NotificationWebSocket] Error:', error.message);
+      // Only log errors that are not max reconnection attempts
+      // This prevents spamming the console with repeated errors
+      if (!error.message.includes('Max reconnection attempts')) {
+        console.error('[NotificationWebSocket] Error:', error.message);
+      }
     },
     autoReconnect: true,
     reconnectDelay: 3000,

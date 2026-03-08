@@ -596,3 +596,10 @@
 - [ ] Show distance to each problem marker
 - [x] Add radius presets (1km, 5km, 10km, custom)
 - [x] Test geofencing with various locations
+
+
+## Bug Fixes - WebSocket Connection Errors
+- [x] Fix WebSocket error handling in useWebSocket hook
+- [x] Fix max reconnection attempts error in useNotificationWebSocket
+- [x] Improve error logging and recovery
+- [x] Test WebSocket stability across multiple connections
