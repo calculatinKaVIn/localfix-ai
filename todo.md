@@ -576,7 +576,7 @@
 - [x] Create notification context for badge state management
 - [x] Create badge component for navigation items
 - [x] Integrate badges into navbar
-- [ ] Connect WebSocket to update badge counts
+- [x] Connect WebSocket to update badge counts
 - [x] Add badge animations
 - [x] Test badges across all pages
-- [ ] Verify real-time updates work correctly
+- [x] Verify real-time updates work correctly

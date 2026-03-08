@@ -17,6 +17,7 @@ import UserProfile from "./pages/UserProfile";
 import Analytics from "./pages/Analytics";
 import CommunityMap from "./pages/CommunityMap";
 import { useAuth } from "./_core/hooks/useAuth";
+import { NotificationWebSocketIntegration } from "./components/NotificationWebSocketIntegration";
 
 function Router() {
   const { user } = useAuth();
@@ -52,6 +53,7 @@ function App() {
         switchable
       >
         <NotificationProvider>
+          <NotificationWebSocketIntegration />
           <GeolocationProvider>
             <TooltipProvider>
               <Toaster />
