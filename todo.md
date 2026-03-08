@@ -550,3 +550,15 @@
 - [x] Fix admin page loading
 - [x] Fix marker display on map
 - [x] Test all fixes and verify functionality
+
+
+## State System Refactoring - Two-State User Interface
+- [x] Create state mapping utility for user-facing display
+- [x] Update CommunityMap to show only in-progress reports
+- [x] Update resolve logic to mark as resolved instead of deleting
+- [x] Update ProblemHistory to show only in-progress and resolved
+- [x] Update UserProfile to show only in-progress and resolved
+- [ ] Update AdminDashboard to show all internal states
+- [ ] Update Analytics to display two-state metrics
+- [ ] Test state display across all pages
+- [ ] Verify resolved reports persist in database

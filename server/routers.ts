@@ -103,7 +103,7 @@ export const appRouter = router({
             latitude: input.latitude || null,
             longitude: input.longitude || null,
             imageUrl: input.imageUrl || null,
-            status: "submitted" as const,
+            status: "in_progress" as const,
           };
 
           const problem = await createProblem(problemData);

@@ -1,0 +1,2 @@
+ALTER TABLE `problems` MODIFY COLUMN `status` enum('in_progress','resolved') NOT NULL DEFAULT 'submitted';--> statement-breakpoint
+ALTER TABLE `problems_v2` MODIFY COLUMN `status` enum('in_progress','resolved') NOT NULL DEFAULT 'submitted';

@@ -48,9 +48,9 @@ export const priorityLevels = ['low', 'medium', 'high', 'critical'] as const;
 export type PriorityLevel = (typeof priorityLevels)[number];
 
 /**
- * Status of problem reports
+ * Status of problem reports - only two states: in_progress and resolved
  */
-export const reportStatuses = ['submitted', 'in_progress', 'resolved', 'rejected'] as const;
+export const reportStatuses = ['in_progress', 'resolved'] as const;
 export type ReportStatus = (typeof reportStatuses)[number];
 
 /**
@@ -70,7 +70,7 @@ export const problems = mysqlTable('problems', {
   imageUrl: text('imageUrl'),
   latitude: varchar('latitude', { length: 50 }),
   longitude: varchar('longitude', { length: 50 }),
-  status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
+  status: mysqlEnum('status', reportStatuses).default('in_progress').notNull(),
   resolutionReason: mysqlEnum('resolutionReason', resolutionReasons),
   resolvedAt: timestamp('resolvedAt'),
   createdAt: timestamp('createdAt').defaultNow().notNull(),
@@ -217,7 +217,7 @@ export const problemsWithLanguage = mysqlTable('problems_v2', {
   imageUrl: text('imageUrl'),
   latitude: varchar('latitude', { length: 50 }),
   longitude: varchar('longitude', { length: 50 }),
-  status: mysqlEnum('status', reportStatuses).default('submitted').notNull(),
+  status: mysqlEnum('status', reportStatuses).default('in_progress').notNull(),
   
   // Language fields
   originalLanguage: varchar('originalLanguage', { length: 10 }).default('en').notNull(),

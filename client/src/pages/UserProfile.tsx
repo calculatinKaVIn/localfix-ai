@@ -102,13 +102,11 @@ export default function UserProfile() {
     );
   }
 
-  // Calculate statistics
+  // Calculate statistics - show only in-progress and resolved to users
   const stats = {
     total: problems?.length || 0,
-    submitted: problems?.filter((p) => p.problem.status === "submitted").length || 0,
-    in_progress: problems?.filter((p) => p.problem.status === "in_progress").length || 0,
+    in_progress: problems?.filter((p) => p.problem.status !== "resolved").length || 0,
     resolved: problems?.filter((p) => p.problem.status === "resolved").length || 0,
-    rejected: problems?.filter((p) => p.problem.status === "rejected").length || 0,
   };
 
   if (isLoading) {
@@ -165,26 +163,18 @@ export default function UserProfile() {
         </div>
 
         {/* Statistics */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-4 mb-8">
           <Card className="card-elegant p-4 text-center">
             <p className="text-3xl font-bold text-primary mb-1">{stats.total}</p>
             <p className="text-sm text-muted-foreground">Total Reports</p>
           </Card>
           <Card className="card-elegant p-4 text-center">
-            <p className="text-3xl font-bold text-blue-600 mb-1">{stats.submitted}</p>
-            <p className="text-sm text-muted-foreground">Submitted</p>
-          </Card>
-          <Card className="card-elegant p-4 text-center">
-            <p className="text-3xl font-bold text-yellow-600 mb-1">{stats.in_progress}</p>
+            <p className="text-3xl font-bold text-amber-600 mb-1">{stats.in_progress}</p>
             <p className="text-sm text-muted-foreground">In Progress</p>
           </Card>
           <Card className="card-elegant p-4 text-center">
             <p className="text-3xl font-bold text-green-600 mb-1">{stats.resolved}</p>
             <p className="text-sm text-muted-foreground">Resolved</p>
-          </Card>
-          <Card className="card-elegant p-4 text-center">
-            <p className="text-3xl font-bold text-red-600 mb-1">{stats.rejected}</p>
-            <p className="text-sm text-muted-foreground">Rejected</p>
           </Card>
         </div>
 

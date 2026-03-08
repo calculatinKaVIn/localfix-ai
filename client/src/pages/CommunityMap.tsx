@@ -4,6 +4,7 @@ import { ImageLoader } from "@/components/ImageLoader";
 import { ImageModal } from "@/components/ImageModal";
 import { ImageThumbnailGallery } from "@/components/ImageThumbnailGallery";
 import { trpc } from "@/lib/trpc";
+
 import { useWebSocket } from "@/hooks/useWebSocket";
 import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
@@ -125,9 +126,12 @@ export default function CommunityMap() {
     markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
 
+    // Filter out resolved reports - only show in-progress reports to users
+    const activeItems = items.filter(i => i.problem.status !== 'resolved');
+
     const filtered = activeFilter === "all"
-      ? items
-      : items.filter(i => i.problem.status === activeFilter);
+      ? activeItems
+      : activeItems.filter(i => i.problem.status === activeFilter);
 
     filtered.forEach(item => {
       const lat = parseFloat(item.problem.latitude ?? "");
@@ -155,7 +159,7 @@ export default function CommunityMap() {
     // Fit bounds if we have markers
     if (markersRef.current.length > 0) {
       const bounds = new google.maps.LatLngBounds();
-      filtered.forEach(item => {
+      activeItems.forEach(item => {
         const lat = parseFloat(item.problem.latitude ?? "");
         const lng = parseFloat(item.problem.longitude ?? "");
         if (!isNaN(lat) && !isNaN(lng)) bounds.extend({ lat, lng });
@@ -588,7 +592,7 @@ export default function CommunityMap() {
                             await deleteProblemMutation.mutateAsync({ problemId: selectedProblem.problem.id, resolutionReason: selectedReason });
                             setSelectedProblem(null);
                             setShowResolveConfirm(false);
-                            toast.success("Report resolved and deleted successfully");
+                            toast.success("Report marked as resolved");
                             refetch();
                           } catch (error) {
                             toast.error("Failed to resolve report");
