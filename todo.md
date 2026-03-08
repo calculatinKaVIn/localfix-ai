@@ -562,3 +562,11 @@
 - [ ] Update Analytics to display two-state metrics
 - [ ] Test state display across all pages
 - [ ] Verify resolved reports persist in database
+
+
+## Online Status Fixes
+- [x] Investigate online/offline status system
+- [x] Fix map online status display
+- [x] Fix user online status display
+- [x] Ensure WebSocket connections show online
+- [x] Test online status across all pages
