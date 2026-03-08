@@ -586,3 +586,13 @@
 - [x] Remove status filters (Submitted, In Progress, Resolved, Rejected) from community map
 - [x] Remove offline/live indicator from community map
 - [x] Ensure only in-progress problems display on community map
+
+
+## Geofencing Feature - Problems by Radius
+- [x] Create distance calculation utility (haversine formula)
+- [x] Add radius slider/input to community map header
+- [x] Implement radius-based filtering logic
+- [x] Draw visual radius circle on map
+- [ ] Show distance to each problem marker
+- [x] Add radius presets (1km, 5km, 10km, custom)
+- [x] Test geofencing with various locations

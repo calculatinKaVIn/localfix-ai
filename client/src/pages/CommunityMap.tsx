@@ -10,6 +10,8 @@ import { toast } from "sonner";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Slider } from "@/components/ui/slider";
+import { calculateDistance, filterByRadius, formatDistance, RADIUS_PRESETS, DEFAULT_RADIUS, type Location } from "@/lib/geofencing";
 import {
   MapPin, X, AlertCircle, Loader2, TrendingUp, Calendar, User,
   Shield, Leaf, Users, DollarSign, Clock, Filter, RefreshCw, Layers, Wifi, WifiOff, CheckCircle2
@@ -69,8 +71,9 @@ export default function CommunityMap() {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const problemsRef = useRef<MapProblem[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<MapProblem | null>(null);
-  // Filter is removed - community map only shows in-progress problems
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [radiusKm, setRadiusKm] = useState<number>(DEFAULT_RADIUS);
+  const [showRadiusControl, setShowRadiusControl] = useState(false);
   const [mapReady, setMapReady] = useState(false);
   const [wsConnected, setWsConnected] = useState(true);
   const [showImageModal, setShowImageModal] = useState(false);
@@ -78,6 +81,9 @@ export default function CommunityMap() {
   const [showResolveConfirm, setShowResolveConfirm] = useState(false);
   const [isResolving, setIsResolving] = useState(false);
   const [selectedReason, setSelectedReason] = useState<string>('fixed');
+
+  // Reference for radius circle on map
+  const radiusCircleRef = useRef<google.maps.Circle | null>(null);
 
   const resolutionReasons = [
     { value: 'fixed', label: 'Fixed', description: 'Issue has been resolved' },
@@ -128,7 +134,18 @@ export default function CommunityMap() {
     markersRef.current = [];
 
     // Only show in-progress problems on community map
-    const filtered = items.filter(i => i.problem.status === 'in_progress');
+    let filtered = items.filter(i => i.problem.status === 'in_progress');
+
+    // Apply radius filter if user location is available
+    if (userLocation && showRadiusControl) {
+      filtered = filtered.filter(item => {
+        const lat = parseFloat(item.problem.latitude ?? "");
+        const lng = parseFloat(item.problem.longitude ?? "");
+        if (isNaN(lat) || isNaN(lng)) return false;
+        const distance = calculateDistance(userLocation, { lat, lng });
+        return distance <= radiusKm;
+      });
+    }
 
     filtered.forEach(item => {
       const lat = parseFloat(item.problem.latitude ?? "");
@@ -163,7 +180,7 @@ export default function CommunityMap() {
       });
       if (!bounds.isEmpty()) map.fitBounds(bounds, 80);
     }
-  }, [buildPinElement]);
+  }, [buildPinElement, userLocation, radiusKm, showRadiusControl]);
 
   // Handle real-time problem updates from WebSocket
   const handleProblemUpdate = useCallback((update: any) => {
@@ -240,6 +257,36 @@ export default function CommunityMap() {
     },
   });
 
+  // Draw radius circle on map when radius control is active
+  useEffect(() => {
+    if (!mapRef.current || !userLocation) return;
+
+    // Clear existing circle
+    if (radiusCircleRef.current) {
+      radiusCircleRef.current.setMap(null);
+    }
+
+    // Draw new circle if radius control is active
+    if (showRadiusControl) {
+      radiusCircleRef.current = new google.maps.Circle({
+        center: userLocation,
+        radius: radiusKm * 1000, // Convert km to meters
+        map: mapRef.current,
+        fillColor: "#3B82F6",
+        fillOpacity: 0.1,
+        strokeColor: "#3B82F6",
+        strokeOpacity: 0.4,
+        strokeWeight: 2,
+      });
+    }
+
+    return () => {
+      if (radiusCircleRef.current) {
+        radiusCircleRef.current.setMap(null);
+      }
+    };
+  }, [userLocation, radiusKm, showRadiusControl]);
+
   // Re-place markers when data changes
   useEffect(() => {
     if (mapRef.current && allProblems && mapReady) {
@@ -285,8 +332,17 @@ export default function CommunityMap() {
             </div>
           </div>
 
-          {/* Refresh Button */}
+          {/* Radius Control & Refresh Button */}
           <div className="flex items-center gap-2">
+            <Button 
+              variant={showRadiusControl ? "default" : "outline"}
+              size="sm" 
+              onClick={() => setShowRadiusControl(!showRadiusControl)}
+              className="h-7 px-2"
+              title="Filter by distance radius"
+            >
+              <MapPin className="w-3.5 h-3.5" />
+            </Button>
             <Button variant="outline" size="sm" onClick={() => refetch()} className="h-7 px-2">
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>
@@ -300,6 +356,45 @@ export default function CommunityMap() {
             <span className="text-xs text-muted-foreground">{STATUS_CONFIG.in_progress.label}</span>
           </div>
         </div>
+        {/* Radius Control Panel */}
+        {showRadiusControl && userLocation && (
+          <div className="mt-4 p-3 bg-muted rounded-lg border border-border">
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-medium text-foreground">Search Radius</label>
+                  <span className="text-sm font-semibold text-primary">{radiusKm} km</span>
+                </div>
+                <Slider
+                  value={[radiusKm]}
+                  onValueChange={(value) => setRadiusKm(value[0])}
+                  min={0.5}
+                  max={25}
+                  step={0.5}
+                  className="w-full"
+                />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {RADIUS_PRESETS.map(preset => (
+                  <Button
+                    key={preset.value}
+                    variant={radiusKm === preset.value ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setRadiusKm(preset.value)}
+                    className="text-xs h-7"
+                  >
+                    {preset.label}
+                  </Button>
+                ))}
+              </div>
+              {userLocation && (
+                <p className="text-xs text-muted-foreground">
+                  Showing problems within {radiusKm}km of your location
+                </p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Map + Side Panel */}
