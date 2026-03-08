@@ -86,7 +86,7 @@ export default function CommunityMap() {
     { value: 'other', label: 'Other', description: 'Other reason' },
   ];
 
-  const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery();
+  const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery({ status: activeFilter === 'all' ? undefined : activeFilter });
   const deleteProblemMutation = trpc.problems.deleteProblem.useMutation();
 
   // Get user's geolocation on mount
@@ -422,14 +422,14 @@ export default function CommunityMap() {
               </div>
 
               {/* Resolution Reason (if resolved) */}
-              {selectedProblem.problem.resolutionReason && (
+              {(selectedProblem.problem as any).resolutionReason && (
                 <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3 transition-colors duration-300">
                   <p className="text-xs font-semibold text-green-700 dark:text-green-400 mb-1 flex items-center gap-1">
                     <CheckCircle2 className="w-3.5 h-3.5" /> Resolution Reason
                   </p>
-                  <p className="text-sm text-green-600 dark:text-green-300 capitalize">{selectedProblem.problem.resolutionReason.replace(/_/g, ' ')}</p>
-                  {selectedProblem.problem.resolvedAt && (
-                    <p className="text-xs text-green-500 dark:text-green-400 mt-1">Resolved: {formatDate(selectedProblem.problem.resolvedAt)}</p>
+                  <p className="text-sm text-green-600 dark:text-green-300 capitalize">{(selectedProblem.problem as any).resolutionReason.replace(/_/g, ' ')}</p>
+                  {(selectedProblem.problem as any).resolvedAt && (
+                    <p className="text-xs text-green-500 dark:text-green-400 mt-1">Resolved: {formatDate((selectedProblem.problem as any).resolvedAt)}</p>
                   )}
                 </div>
               )}

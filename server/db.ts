@@ -105,7 +105,7 @@ export async function getAllProblemsForMap(filters?: {
       ? eq(problems.status, filters.status as any)
       : undefined;
 
-    const result = await db
+    const baseQuery = db
       .select({
         problem: problems,
         report: reports,
@@ -113,8 +113,11 @@ export async function getAllProblemsForMap(filters?: {
       })
       .from(problems)
       .leftJoin(reports, eq(reports.problemId, problems.id))
-      .leftJoin(users, eq(users.id, problems.userId))
-      .where(statusFilter)
+      .leftJoin(users, eq(users.id, problems.userId));
+
+    const filteredQuery = statusFilter ? baseQuery.where(statusFilter) : baseQuery;
+
+    const result = await filteredQuery
       .orderBy(desc(problems.createdAt))
       .limit(filters?.limit || 10000)
       .offset(filters?.offset || 0);

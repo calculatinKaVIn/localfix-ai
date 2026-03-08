@@ -196,6 +196,20 @@ export const appRouter = router({
     /**
      * Delete a problem (admin or problem owner)
      */
+    getById: protectedProcedure
+      .input(z.object({ id: z.number() }))
+      .query(async ({ input }) => {
+        try {
+          return await getProblemWithReport(input.id);
+        } catch (error) {
+          console.error("Error fetching problem:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to fetch problem",
+          });
+        }
+      }),
+
     deleteProblem: protectedProcedure
       .input(z.object({ problemId: z.number(), resolutionReason: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
@@ -236,6 +250,70 @@ export const appRouter = router({
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
             message: "Failed to fetch map problems",
+          });
+        }
+      }),
+  }),
+
+  admin: router({
+    allProblems: protectedProcedure
+      .input(z.object({ limit: z.number().optional(), offset: z.number().optional() }))
+      .query(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Admin access required',
+          });
+        }
+        try {
+          return await getAllProblems(input.limit || 50, input.offset || 0);
+        } catch (error) {
+          console.error('Error fetching admin problems:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to fetch problems',
+          });
+        }
+      }),
+
+    updateStatus: protectedProcedure
+      .input(z.object({ problemId: z.number(), status: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Admin access required',
+          });
+        }
+        try {
+          await updateProblemStatus(input.problemId, input.status);
+          return { success: true };
+        } catch (error) {
+          console.error('Error updating problem status:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to update status',
+          });
+        }
+      }),
+
+    deleteProblem: protectedProcedure
+      .input(z.object({ problemId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        if (ctx.user?.role !== 'admin') {
+          throw new TRPCError({
+            code: 'FORBIDDEN',
+            message: 'Admin access required',
+          });
+        }
+        try {
+          await deleteProblem(input.problemId);
+          return { success: true };
+        } catch (error) {
+          console.error('Error deleting problem:', error);
+          throw new TRPCError({
+            code: 'INTERNAL_SERVER_ERROR',
+            message: 'Failed to delete problem',
           });
         }
       }),

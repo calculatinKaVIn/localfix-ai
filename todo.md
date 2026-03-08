@@ -539,3 +539,14 @@
 - [ ] Create pie chart for resolution reason distribution
 - [ ] Add filtering by resolution reason on Live Map
 - [ ] Write tests for resolution reason tracking
+
+
+## Critical Bug Fixes - Map & Admin Issues
+- [x] Investigate dev server logs for errors
+- [x] Check browser console for JavaScript errors
+- [x] Debug map component rendering
+- [x] Verify API endpoints are working
+- [x] Check database queries for problems data
+- [x] Fix admin page loading
+- [x] Fix marker display on map
+- [x] Test all fixes and verify functionality
