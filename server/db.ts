@@ -233,9 +233,21 @@ export async function updateProblemStatus(problemId: number, status: string) {
   const db = await getDb();
   if (!db) throw new Error("Database not available");
 
+  // Validate status is one of the allowed values
+  const validStatuses = ['in_progress', 'resolved'];
+  if (!validStatuses.includes(status)) {
+    throw new Error(`Invalid status: ${status}. Must be one of: ${validStatuses.join(', ')}`);
+  }
+
+  // When resolving, set the resolvedAt timestamp
+  const updateData: any = { status: status as any };
+  if (status === 'resolved') {
+    updateData.resolvedAt = new Date();
+  }
+
   const result = await db
     .update(problems)
-    .set({ status: status as any })
+    .set(updateData)
     .where(eq(problems.id, problemId));
 
   return result;

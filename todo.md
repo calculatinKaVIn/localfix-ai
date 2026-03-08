@@ -612,3 +612,10 @@
 - [x] Add loading state during reconnection
 - [x] Display success/error messages
 - [x] Test reconnect functionality
+
+
+## Bug Fixes - Report Resolution
+- [x] Fix report resolution functionality - admin cannot resolve reports
+- [x] Verify resolution updates problem status to 'resolved'
+- [x] Ensure resolved reports disappear from community map
+- [x] Test resolution reason selection
