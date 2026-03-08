@@ -580,3 +580,9 @@
 - [x] Add badge animations
 - [x] Test badges across all pages
 - [x] Verify real-time updates work correctly
+
+
+## Community Map UI Cleanup
+- [x] Remove status filters (Submitted, In Progress, Resolved, Rejected) from community map
+- [x] Remove offline/live indicator from community map
+- [x] Ensure only in-progress problems display on community map

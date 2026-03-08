@@ -69,7 +69,7 @@ export default function CommunityMap() {
   const markersRef = useRef<google.maps.marker.AdvancedMarkerElement[]>([]);
   const problemsRef = useRef<MapProblem[]>([]);
   const [selectedProblem, setSelectedProblem] = useState<MapProblem | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string>("all");
+  // Filter is removed - community map only shows in-progress problems
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapReady, setMapReady] = useState(false);
   const [wsConnected, setWsConnected] = useState(true);
@@ -87,7 +87,8 @@ export default function CommunityMap() {
     { value: 'other', label: 'Other', description: 'Other reason' },
   ];
 
-  const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery({ status: activeFilter === 'all' ? undefined : activeFilter });
+  // Always fetch only in-progress problems for community map
+  const { data: allProblems, isLoading, refetch } = trpc.map.allProblems.useQuery({ status: 'in_progress' });
   const deleteProblemMutation = trpc.problems.deleteProblem.useMutation();
 
   // Get user's geolocation on mount
@@ -126,12 +127,8 @@ export default function CommunityMap() {
     markersRef.current.forEach(m => { m.map = null; });
     markersRef.current = [];
 
-    // Filter out resolved reports - only show in-progress reports to users
-    const activeItems = items.filter(i => i.problem.status !== 'resolved');
-
-    const filtered = activeFilter === "all"
-      ? activeItems
-      : activeItems.filter(i => i.problem.status === activeFilter);
+    // Only show in-progress problems on community map
+    const filtered = items.filter(i => i.problem.status === 'in_progress');
 
     filtered.forEach(item => {
       const lat = parseFloat(item.problem.latitude ?? "");
@@ -159,14 +156,14 @@ export default function CommunityMap() {
     // Fit bounds if we have markers
     if (markersRef.current.length > 0) {
       const bounds = new google.maps.LatLngBounds();
-      activeItems.forEach(item => {
+      filtered.forEach((item: MapProblem) => {
         const lat = parseFloat(item.problem.latitude ?? "");
         const lng = parseFloat(item.problem.longitude ?? "");
         if (!isNaN(lat) && !isNaN(lng)) bounds.extend({ lat, lng });
       });
       if (!bounds.isEmpty()) map.fitBounds(bounds, 80);
     }
-  }, [activeFilter, buildPinElement]);
+  }, [buildPinElement]);
 
   // Handle real-time problem updates from WebSocket
   const handleProblemUpdate = useCallback((update: any) => {
@@ -243,13 +240,13 @@ export default function CommunityMap() {
     },
   });
 
-  // Re-place markers when data or filter changes
+  // Re-place markers when data changes
   useEffect(() => {
     if (mapRef.current && allProblems && mapReady) {
       problemsRef.current = allProblems as MapProblem[];
       placeMarkers(mapRef.current, problemsRef.current);
     }
-  }, [allProblems, activeFilter, mapReady, placeMarkers]);
+  }, [allProblems, mapReady, placeMarkers]);
 
   const handleMapReady = useCallback((map: google.maps.Map) => {
     mapRef.current = map;
@@ -265,9 +262,8 @@ export default function CommunityMap() {
     p => p.problem.latitude && p.problem.longitude
   ) ?? [];
 
-  const filteredCount = activeFilter === "all"
-    ? problemsWithLocation.length
-    : problemsWithLocation.filter(p => p.problem.status === activeFilter).length;
+  // Count only in-progress problems
+  const filteredCount = problemsWithLocation.filter(p => p.problem.status === 'in_progress').length;
 
   const formatDate = (date: Date | string) =>
     new Date(date).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -289,61 +285,20 @@ export default function CommunityMap() {
             </div>
           </div>
 
-          {/* Connection Status & Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            {/* WebSocket Status */}
-            <div className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium ${
-              wsConnected 
-                ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300" 
-                : "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300"
-            }`}>
-              {wsConnected ? (
-                <>
-                  <Wifi className="w-3.5 h-3.5" />
-                  Live
-                </>
-              ) : (
-                <>
-                  <WifiOff className="w-3.5 h-3.5" />
-                  Offline
-                </>
-              )}
-            </div>
-
-            <Filter className="w-4 h-4 text-muted-foreground" />
-            {["all", "submitted", "in_progress", "resolved", "rejected"].map(f => {
-              const cfg = f === "all" ? null : STATUS_CONFIG[f];
-              const isActive = activeFilter === f;
-              return (
-                <button
-                  key={f}
-                  onClick={() => setActiveFilter(f)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-all ${
-                    isActive
-                      ? f === "all"
-                        ? "bg-primary text-white border-primary"
-                        : `${cfg!.bg} ${cfg!.color} ${cfg!.border} dark:bg-opacity-20`
-                      : "bg-background text-muted-foreground border-border hover:border-primary/40 dark:bg-muted"
-                  }`}
-                >
-                  {f === "all" ? "All" : cfg!.label}
-                </button>
-              );
-            })}
+          {/* Refresh Button */}
+          <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => refetch()} className="h-7 px-2">
               <RefreshCw className="w-3.5 h-3.5" />
             </Button>
           </div>
         </div>
 
-        {/* Legend */}
+        {/* Legend - only show in-progress status */}
         <div className="flex items-center gap-4 mt-3 flex-wrap">
-          {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-            <div key={key} className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: cfg.pin }} />
-              <span className="text-xs text-muted-foreground">{cfg.label}</span>
-            </div>
-          ))}
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-full inline-block" style={{ backgroundColor: STATUS_CONFIG.in_progress.pin }} />
+            <span className="text-xs text-muted-foreground">{STATUS_CONFIG.in_progress.label}</span>
+          </div>
         </div>
       </div>
 
