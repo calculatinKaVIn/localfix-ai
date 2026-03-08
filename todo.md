@@ -603,3 +603,12 @@
 - [x] Fix max reconnection attempts error in useNotificationWebSocket
 - [x] Improve error logging and recovery
 - [x] Test WebSocket stability across multiple connections
+
+
+## Manual Reconnect Button - Settings Menu
+- [x] Create WebSocket context for global connection state
+- [x] Add reconnect button to settings menu
+- [x] Show connection status in settings
+- [x] Add loading state during reconnection
+- [x] Display success/error messages
+- [x] Test reconnect functionality

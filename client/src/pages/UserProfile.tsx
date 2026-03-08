@@ -1,10 +1,11 @@
 import { useState } from "react";
+import { useWebSocketContext } from "@/contexts/WebSocketContext";
 import { useAuth } from "@/_core/hooks/useAuth";
 import { trpc } from "@/lib/trpc";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, User, Calendar, MapPin, TrendingUp, Clock, AlertCircle, LogOut } from "lucide-react";
+import { Loader2, User, Calendar, MapPin, TrendingUp, Clock, AlertCircle, LogOut, Wifi, WifiOff, RotateCcw } from "lucide-react";
 import { format } from "date-fns";
 import ImageGallery from "@/components/ImageGallery";
 import { useLocation } from "wouter";
@@ -19,6 +20,9 @@ export default function UserProfile() {
   const [selectedProblemId, setSelectedProblemId] = useState<number | null>(null);
   const [sortBy, setSortBy] = useState<SortOption>("newest");
   const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+  const [showSettings, setShowSettings] = useState(false);
+  const [reconnectMessage, setReconnectMessage] = useState<string | null>(null);
+  const { isConnected, isConnecting, reconnect, lastConnectionError } = useWebSocketContext();
 
   const { data: problems, isLoading, error } = trpc.problems.myProblems.useQuery();
   const { data: selectedProblem } = trpc.problems.getById.useQuery(
@@ -29,6 +33,20 @@ export default function UserProfile() {
   const handleLogout = async () => {
     await logout();
     setLocation("/");
+  };
+
+  const handleManualReconnect = async () => {
+    setReconnectMessage(null);
+    reconnect();
+    setReconnectMessage("Attempting to reconnect...");
+    setTimeout(() => {
+      if (isConnected) {
+        setReconnectMessage("✓ Successfully reconnected!");
+        setTimeout(() => setReconnectMessage(null), 3000);
+      } else {
+        setReconnectMessage("✗ Reconnection failed. Please try again.");
+      }
+    }, 1000);
   };
 
   const getStatusColor = (status: StatusType) => {
@@ -154,13 +172,98 @@ export default function UserProfile() {
                   </p>
                 </div>
               </div>
-              <Button variant="outline" onClick={handleLogout} className="gap-2">
-                <LogOut className="w-4 h-4" />
-                Logout
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowSettings(!showSettings)} className="gap-2">
+                  <RotateCcw className="w-4 h-4" />
+                  Settings
+                </Button>
+                <Button variant="outline" onClick={handleLogout} className="gap-2">
+                  <LogOut className="w-4 h-4" />
+                  Logout
+                </Button>
+              </div>
             </div>
           </Card>
         </div>
+
+        {/* Settings Panel */}
+        {showSettings && (
+          <Card className="card-elegant p-6 mb-8 border-l-4 border-primary">
+            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+              <RotateCcw className="w-5 h-5" />
+              Connection Settings
+            </h2>
+            <div className="space-y-4">
+              {/* Connection Status */}
+              <div className="flex items-center justify-between p-4 bg-background rounded-lg">
+                <div className="flex items-center gap-3">
+                  {isConnected ? (
+                    <Wifi className="w-5 h-5 text-green-600" />
+                  ) : (
+                    <WifiOff className="w-5 h-5 text-red-600" />
+                  )}
+                  <div>
+                    <p className="font-medium">WebSocket Connection</p>
+                    <p className="text-sm text-muted-foreground">
+                      {isConnected ? "Connected" : "Disconnected"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Error Message */}
+              {lastConnectionError && (
+                <div className="p-4 bg-red-50 dark:bg-red-950/20 rounded-lg border border-red-200 dark:border-red-800">
+                  <p className="text-sm text-red-800 dark:text-red-300">
+                    <span className="font-semibold">Connection Error:</span> {lastConnectionError}
+                  </p>
+                </div>
+              )}
+
+              {/* Reconnect Button */}
+              <Button
+                onClick={handleManualReconnect}
+                disabled={isConnecting || isConnected}
+                className="w-full gap-2"
+              >
+                {isConnecting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Reconnecting...
+                  </>
+                ) : isConnected ? (
+                  <>
+                    <Wifi className="w-4 h-4" />
+                    Already Connected
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="w-4 h-4" />
+                    Reconnect Now
+                  </>
+                )}
+              </Button>
+
+              {/* Reconnect Message */}
+              {reconnectMessage && (
+                <p className={`text-sm text-center font-medium ${
+                  reconnectMessage.includes("✓")
+                    ? "text-green-600 dark:text-green-400"
+                    : reconnectMessage.includes("Attempting")
+                      ? "text-blue-600 dark:text-blue-400"
+                      : "text-red-600 dark:text-red-400"
+                }`}>
+                  {reconnectMessage}
+                </p>
+              )}
+
+              {/* Info Text */}
+              <p className="text-xs text-muted-foreground">
+                If you experience connection issues, click "Reconnect Now" to manually restore the WebSocket connection. This will allow real-time updates for notifications and live map data.
+              </p>
+            </div>
+          </Card>
+        )}
 
         {/* Statistics */}
         <div className="grid grid-cols-3 gap-4 mb-8">
